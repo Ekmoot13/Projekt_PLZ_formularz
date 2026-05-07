@@ -9,17 +9,10 @@ import json
 from datetime import datetime
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://localhost/formularz')
-conn = psycopg2.connect(DATABASE_URL)
 
 app = Flask(__name__)
-app.app.secret_key = os.environ.get('SECRET_KEY', 'dev-fallback-key')
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-fallback-key')
 metrics = PrometheusMetrics(app)
-
-DB_HOST = os.getenv('DB_HOST', 'devops_database')
-DB_NAME = os.getenv('DB_NAME', 'form_data')
-DB_USER = os.getenv('DB_USER', 'admin')
-DB_PASS = os.getenv('DB_PASS', 'moje_bezpieczne_haslo')
-DB_PORT = os.getenv('DB_PORT', '5432')
 
 ADMIN_USER = os.getenv('ADMIN_USER', 'admin')
 ADMIN_PASS = os.getenv('ADMIN_PASS', 'admin')
@@ -52,10 +45,11 @@ def requires_auth(f):
 # ── DB ────────────────────────────────────────────────────
 
 def get_db():
-    return psycopg2.connect(
-        host=DB_HOST, database=DB_NAME,
-        user=DB_USER, password=DB_PASS, port=DB_PORT
-    )
+    url = DATABASE_URL
+    # Railway używa "postgres://" — psycopg2 wymaga "postgresql://"
+    if url.startswith('postgres://'):
+        url = url.replace('postgres://', 'postgresql://', 1)
+    return psycopg2.connect(url)
 
 def init_db():
     retries = 8
