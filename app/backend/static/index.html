@@ -438,53 +438,51 @@ boatEl.addEventListener('click', () => {
     }
 });
 
-/* ── Rescue — odwrócony salt na wodę ────────
-   BUGFIX: zapisujemy shore przed czyszczeniem stanu           */
+/* ── Rescue — odwrócony salt na środek wody ── */
 function startRescue() {
-    const shore = s.onShore;  // ← zapisz ZANIM wyczyścimy stan!
+    const shore = s.onShore;
     s.rescuing  = true;
     boatEl.classList.remove('capsized');
+    hintEl.style.display = 'none';
 
-    const sL   = shoreL(), sR = shoreR();
-
-    /* Pozycja startowa = plaża (tam gdzie łódka leży) */
+    /* Start = plaża gdzie łódka leży */
     const startX = s.x - 40;
     const startY = beachY();
 
-    /* Pozycja docelowa = woda, blisko granicy wyspy */
-    const endX = shore === 'left'
-        ? sL + 100          // w prawo od lewej wyspy
-        : sR - 100 - 80;    // w lewo od prawej wyspy
+    /* Cel = ŚRODEK ekranu na linii wody — daleko od obu wysp */
+    const endX = window.innerWidth / 2 - 40;
     const endY = waterY();
 
     const startT = performance.now();
-    const DUR    = 800;
+    const DUR    = 950;
 
     function unflip(now) {
         const p  = Math.min((now - startT) / DUR, 1);
         const ep = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2, 3)/2;
 
         const cx  = startX + (endX - startX) * ep;
-        /* Y interpoluje od plaży do wody, plus łuk w górę (arc) */
-        const cy  = startY + (endY - startY) * ep - 110 * Math.sin(Math.PI * p);
-        /* Obrót odwrotny: od 360° (leżąca) do 0° (prosto) */
-        const rot = (1 - ep) * 400;
+        /* Łuk w górę podczas lotu */
+        const cy  = startY + (endY - startY) * ep - 130 * Math.sin(Math.PI * p);
+        /* Obrót: od 360° (leżąca) do 0° (prosto) */
+        const rot = (1 - ep) * 360;
+        /* Kierunek: od wyspy do środka */
+        const scx = shore === 'left' ? 1 : -1;
 
         boatEl.style.transform =
-            `translate(${cx}px,${cy}px) rotate(${rot}deg) scaleX(1)`;
+            `translate(${cx}px,${cy}px) rotate(${rot}deg) scaleX(${scx})`;
 
         if (p < 1) {
             requestAnimationFrame(unflip);
         } else {
-            /* Wylądował na wodzie — przywróć normalne pływanie */
-            s.x          = endX + 40;
+            /* Na wodzie — środek ekranu, sync myszy */
+            s.x          = window.innerWidth / 2;
             s.rescuing   = false;
             s.capsized   = false;
             s.onShore    = null;
             s.clicks     = 0;
-            s.facing     = shore === 'left' ? 1 : -1;  // ← używamy zapisanego shore!
+            s.facing     = shore === 'left' ? 1 : -1;
             s.dispFacing = s.facing;
-            mouseX       = s.x;  // sync myszy by LERP nie skakał
+            mouseX       = s.x;
         }
     }
     requestAnimationFrame(unflip);
