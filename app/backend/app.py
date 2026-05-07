@@ -24,8 +24,8 @@ def check_auth(username, password):
 
 def authenticate():
     return Response(
-        'Brak dostępu. Zaloguj się.\n', 401,
-        {'WWW-Authenticate': 'Basic realm="Kapitanat PLŻ"'}
+        'Brak dostepu. Zaloguj sie.\n', 401,
+        {'WWW-Authenticate': 'Basic realm="Kapitanat PLZ"'}
     )
 
 def requires_auth(f):
