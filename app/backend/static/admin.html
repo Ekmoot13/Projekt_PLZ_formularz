@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kapitanat — PLŻ</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+    /* ─── KAFELKI LIST ───────────────────────────────── */
+    .list-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px; margin-top: 14px;
+    }
+    .list-tile {
+        background: var(--input-bg); border-radius: 16px;
+        padding: 16px 18px; position: relative;
+        border: 2px solid transparent; transition: border-color .2s;
+    }
+    .list-tile.is-active {
+        border-color: var(--water-dark);
+    }
+    .tile-name {
+        font-size: 15px; font-weight: 800; color: var(--navy);
+        margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+    }
+    .badge-active {
+        background: var(--water-dark); color: #fff;
+        font-size: 10px; padding: 2px 8px; border-radius: 10px;
+        font-weight: 900; letter-spacing: 1px;
+    }
+    .tile-preview {
+        font-size: 12px; color: var(--text-sub); margin-bottom: 12px;
+        line-height: 1.6; max-height: 72px; overflow: hidden;
+    }
+    .tile-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+    .tile-btn {
+        padding: 6px 14px; border-radius: 10px; font-size: 12px;
+        font-weight: 800; font-family: 'Nunito', sans-serif;
+        border: none; cursor: pointer; transition: .15s;
+    }
+    .tile-btn-edit     { background: var(--sky-mid); color: var(--navy); }
+    .tile-btn-activate { background: var(--water-dark); color: #fff; }
+    .tile-btn-delete   { background: #f8d7da; color: #721c24; }
+    .tile-btn:hover    { opacity: .85; transform: translateY(-1px); }
+
+    /* ─── MODAL EDYCJI ───────────────────────────────── */
+    .modal-overlay {
+        position: fixed; inset: 0; z-index: 200;
+        background: rgba(26,53,96,.55); backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 16px;
+    }
+    .modal-box {
+        background: #fff; border-radius: 22px;
+        padding: 28px 26px; width: 100%; max-width: 520px;
+        box-shadow: 0 16px 48px rgba(26,53,96,.3);
+        max-height: 90vh; overflow-y: auto;
+    }
+    .modal-box h3 {
+        font-family: 'Pacifico', cursive; font-size: 18px;
+        color: var(--navy); margin-bottom: 16px;
+    }
+    .modal-hint {
+        font-size: 12px; color: var(--text-sub);
+        background: rgba(74,154,187,.1); border-radius: 10px;
+        padding: 10px 14px; margin-bottom: 12px; line-height: 1.6;
+    }
+    .modal-box textarea {
+        width: 100%; min-height: 180px; padding: 12px 14px;
+        border-radius: 12px; border: 1.5px solid rgba(74,154,187,.35);
+        font-family: 'Nunito', monospace; font-size: 13px;
+        color: var(--navy); resize: vertical; outline: none;
+        background: var(--input-bg);
+    }
+    .modal-box textarea:focus { border-color: var(--water-dark); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-actions .btn { margin-top: 0; }
+
+    /* ─── UPLOAD ─────────────────────────────────────── */
+    .upload-row {
+        display: flex; gap: 10px; align-items: center;
+        margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .upload-label {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(74,154,187,.18); color: var(--navy);
+        border-radius: 10px; padding: 8px 14px; font-size: 13px;
+        font-weight: 700; cursor: pointer; transition: .15s;
+    }
+    .upload-label:hover { background: rgba(74,154,187,.3); }
+    .upload-label input[type=file] { display: none; }
+    .upload-filename { font-size: 12px; color: var(--text-sub); }
+
+    /* ─── HASHTAG ────────────────────────────────────── */
+    .hashtag-row {
+        display: flex; gap: 10px; align-items: flex-start;
+    }
+    .hashtag-row .field { flex: 1; margin-bottom: 0; }
+    .hashtag-row .btn { width: auto; padding: 14px 20px; margin-top: 0; border-radius: 14px; }
+
+    /* ─── ZAMÓWIENIA ─────────────────────────────────── */
+    .filter-bar {
+        display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .filter-bar input,
+    .filter-bar select {
+        flex: 1; min-width: 140px; background: var(--input-bg);
+        border: none; border-radius: 12px; padding: 11px 16px;
+        font-family: 'Nunito', sans-serif; font-size: 14px;
+        font-weight: 600; color: var(--navy); outline: none;
+    }
+    .filter-bar input:focus,
+    .filter-bar select:focus { box-shadow: 0 0 0 2px rgba(74,154,187,.35); }
+
+    .order-card {
+        background: var(--input-bg); border-radius: 14px;
+        padding: 14px 18px; margin-bottom: 10px;
+        border-left: 5px solid var(--water-dark);
+    }
+    .order-card-head {
+        display: flex; justify-content: space-between;
+        align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;
+    }
+    .order-club { font-size: 15px; font-weight: 800; color: var(--navy); }
+    .order-meta { font-size: 11px; color: #7a95bb; }
+    .order-hashtag {
+        background: rgba(74,154,187,.18); color: var(--water-dark);
+        font-size: 11px; font-weight: 800; border-radius: 8px;
+        padding: 2px 10px;
+    }
+    .order-days { display: flex; flex-wrap: wrap; gap: 10px; }
+    .order-day  { font-size: 12px; color: var(--text-sub); }
+    .order-day  strong { color: var(--navy); display: block; font-size: 11px;
+                         letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+
+    .empty-state { text-align: center; color: var(--text-sub); font-size: 14px; padding: 28px 0; }
+
+    /* ─── HISTORIA EDYCJI ──────────────────────────────── */
+    .history-entry {
+        border-left: 3px solid rgba(74,154,187,.3);
+        padding: 8px 14px; margin-bottom: 8px; border-radius: 0 10px 10px 0;
+        background: rgba(74,154,187,.06);
+    }
+    .history-entry summary {
+        cursor: pointer; font-size: 12px; font-weight: 800; color: var(--text-sub);
+        list-style: none; display: flex; justify-content: space-between;
+    }
+    .history-entry summary::-webkit-details-marker { display: none; }
+    .history-dishes { font-size: 12px; color: var(--navy); margin-top: 8px; }
+    .history-day { font-weight: 800; margin-top: 5px; }
+
+    /* ─── KLIKALNE KARTY ZAMÓWIEŃ ──────────────────────── */
+    .order-card { cursor: pointer; transition: background .15s; }
+    .order-card:hover { background: var(--input-bg2); }
+    .order-card.is-selected {
+        background: rgba(74,154,187,.22);
+        border-left-color: var(--navy);
+    }
+
+    /* ─── PASEK WYBORU I POBIERANIA ──────────────────────── */
+    .selection-toolbar {
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        background: var(--input-bg2); border-radius: 14px;
+        padding: 10px 16px; margin-bottom: 12px;
+        border: 1.5px solid rgba(74,154,187,.3);
+    }
+    .sel-check-all {
+        display: flex; align-items: center; gap: 7px;
+        font-size: 13px; font-weight: 800; color: var(--navy);
+        cursor: pointer; user-select: none;
+    }
+    .sel-check-all input[type=checkbox] {
+        width: 17px; height: 17px; cursor: pointer;
+        accent-color: var(--water-dark); flex-shrink: 0;
+    }
+    .sel-count { font-size: 12px; color: var(--text-sub); font-weight: 700; }
+    .sel-download-btn {
+        margin-left: auto; padding: 8px 18px; border-radius: 10px;
+        font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif;
+        border: none; cursor: pointer; transition: .15s;
+        background: var(--navy); color: #fff;
+    }
+    .sel-download-btn:disabled { background: rgba(26,53,96,.22); cursor: default; }
+    .sel-download-btn:not(:disabled):hover {
+        background: var(--water-dark); transform: translateY(-1px);
+    }
+    .order-sel-cb {
+        width: 17px; height: 17px; cursor: pointer;
+        accent-color: var(--water-dark); flex-shrink: 0; margin-top: 2px;
+    }
+
+    /* ─── NOWA LISTA PRZYCISK ─────────────────────────── */
+    .new-list-btn {
+        display: flex; align-items: center; gap: 8px;
+        background: rgba(26,53,96,.07); border-radius: 14px;
+        padding: 14px 18px; cursor: pointer; border: 2px dashed rgba(74,154,187,.35);
+        color: var(--navy); font-weight: 800; font-size: 14px;
+        transition: .18s; width: 100%; text-align: left; font-family: 'Nunito',sans-serif;
+    }
+    .new-list-btn:hover { background: rgba(74,154,187,.12); border-color: var(--water-dark); }
+    </style>
+</head>
+<body>
+
+<div class="sea-scene" aria-hidden="true">
+    <svg viewBox="0 0 800 220" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+        <path d="M0 120 Q200 95 400 120 Q600 145 800 120 L800 220 L0 220Z" fill="#4a9abb" opacity=".85"/>
+        <path d="M0 145 Q200 125 400 148 Q600 168 800 145 L800 220 L0 220Z" fill="#2c6e8a" opacity=".7"/>
+        <path d="M0 170 Q200 158 400 172 Q600 186 800 170 L800 220 L0 220Z" fill="#1a4f6a" opacity=".6"/>
+    </svg>
+</div>
+
+<div class="page">
+
+    <div class="plz-logo">
+        <img src="/static/images/PLZ_transparent_1.webp" width="50" height="50" alt="PLŻ" style="object-fit:contain;">
+        <div class="plz-logo__text">PLŻ<span class="plz-logo__sub">Polska Liga Żeglarska</span></div>
+    </div>
+
+    <div class="card" style="max-width:720px;">
+        <h1 class="card__title">⚓ Kapitanat</h1>
+        <p class="card__sub">Panel zarządzania regatami</p>
+
+        <!-- ══ 1. LISTY KLUBÓW ══════════════════════════ -->
+        <p class="section-title">Listy klubów</p>
+
+        <button class="new-list-btn" onclick="openNewClubList()">
+            ➕ Dodaj nową listę klubów
+        </button>
+
+        <div class="list-grid" id="club-lists-grid"></div>
+
+        <hr class="divider">
+
+        <!-- ══ 2. LISTY DAŃ ═════════════════════════════ -->
+        <p class="section-title">Listy dań (jadłospis)</p>
+
+        <button class="new-list-btn" onclick="openNewMealList()">
+            ➕ Dodaj nowe menu
+        </button>
+
+        <div class="list-grid" id="meal-lists-grid"></div>
+
+        <hr class="divider">
+
+        <!-- ══ 3. HASHTAG ══════════════════════════════ -->
+        <p class="section-title">Hashtag eventu</p>
+        <p style="font-size:13px; color:var(--text-sub); margin-bottom:14px;">
+            Hashtag jest przypisywany do każdego zamówienia (widoczny tylko w panelu admina).
+        </p>
+
+        <div class="hashtag-row">
+            <div class="field">
+                <input type="text" id="hashtag-input" placeholder="np. #Regaty2025">
+            </div>
+            <button class="btn btn-primary" onclick="saveHashtag()">Zapisz</button>
+        </div>
+        <div id="hashtag-saved" style="display:none; color:#155724; font-size:13px; font-weight:700; margin-top:8px;">
+            ✅ Hashtag zapisany!
+        </div>
+
+        <hr class="divider">
+
+        <!-- ══ 4. ZAMÓWIENIA ════════════════════════════ -->
+        <p class="section-title">Złożone zamówienia</p>
+
+        <div class="filter-bar">
+            <input type="text" id="search-input" placeholder="🔍 Szukaj po nazwie klubu..." oninput="filterOrders()">
+            <select id="filter-club" onchange="filterOrders()">
+                <option value="">Wszystkie kluby</option>
+            </select>
+            <select id="filter-hashtag" onchange="filterOrders()">
+                <option value="">Wszystkie hashtagi</option>
+            </select>
+        </div>
+
+        <div class="selection-toolbar" id="selection-toolbar">
+            <label class="sel-check-all">
+                <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)">
+                Zaznacz wszystko
+            </label>
+            <span class="sel-count" id="sel-count-label">Wybrano: 0</span>
+            <button class="sel-download-btn" id="download-btn" onclick="downloadOrders()" disabled>
+                ⬇️ Pobierz CSV
+            </button>
+        </div>
+
+        <div id="orders-container">
+            <p class="empty-state">Ładowanie...</p>
+        </div>
+
+        <a href="/" class="btn btn-secondary" style="margin-top:28px;">← Powrót do portu</a>
+    </div>
+</div>
+
+<!-- ══ MODAL EDYCJI LISTY KLUBÓW ══════════════════════ -->
+<div id="modal-club" class="modal-overlay" style="display:none;" onclick="closeModalClub(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <h3 id="modal-club-title">Lista klubów</h3>
+
+        <div class="field">
+            <label>Nazwa listy</label>
+            <input type="text" id="edit-club-name" placeholder="np. Regaty Gdańsk 2025">
+        </div>
+
+        <div class="modal-hint">
+            <strong>Format:</strong> jedna linia = jeden klub:<br>
+            <code>Nazwa klubu, liczba zawodników, hasło</code><br>
+            Liczba i hasło są <strong>opcjonalne</strong> — domyślnie 4 zawodników i losowe 6-cyfrowe hasło.<br>
+            Przykłady:<br>
+            <code>Politechnika Gdańska, 4, regaty2025</code><br>
+            <code>Klub Morski</code> → auto: 4 zawodników, hasło wygenerowane
+        </div>
+
+        <div class="upload-row">
+            <label class="upload-label">
+                📂 Wczytaj plik .txt
+                <input type="file" accept=".txt" id="club-file-input" onchange="loadClubFile()">
+            </label>
+            <span class="upload-filename" id="club-filename">brak pliku</span>
+            <button class="tile-btn tile-btn-edit" onclick="applyClubDefaults()" type="button"
+                title="Uzupełnij brakujące hasła i liczby zawodników">
+                🔑 Uzupełnij/pokaż hasła
+            </button>
+        </div>
+
+        <textarea id="edit-club-content"
+            placeholder="Klub Morski Gdańsk, 8, haslo123&#10;AZS Gdynia&#10;Politechnika, 4"></textarea>
+
+        <div class="modal-actions">
+            <button class="btn btn-secondary" style="flex:1" onclick="closeModalClub()">Anuluj</button>
+            <button class="btn btn-primary"   style="flex:2; margin-top:0;" onclick="saveClubList()">💾 Zapisz</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL EDYCJI LISTY DAN ══════════════════════════ -->
+<div id="modal-meal" class="modal-overlay" style="display:none;" onclick="closeModalMeal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <h3 id="modal-meal-title">Menu / jadłospis</h3>
+
+        <div class="field">
+            <label>Nazwa menu</label>
+            <input type="text" id="edit-meal-name" placeholder="np. Menu Regaty Gdańsk 2025">
+        </div>
+
+        <div class="modal-hint">
+            <strong>Format pliku / edycji:</strong><br>
+            Jedna linia = jeden dzień:<br>
+            <code>Dzień N: danie1;danie2;danie3</code><br>
+            Przykład: <code>Dzień 1: kotlet;pierogi;zupa</code>
+        </div>
+
+        <div class="upload-row">
+            <label class="upload-label">
+                📂 Wczytaj plik .txt
+                <input type="file" accept=".txt" id="meal-file-input" onchange="loadMealFile()">
+            </label>
+            <span class="upload-filename" id="meal-filename">brak pliku</span>
+        </div>
+
+        <textarea id="edit-meal-content"
+            placeholder="Dzień 1: kotlet;pierogi&#10;Dzień 2: szpinak;jabłko"></textarea>
+
+        <div class="modal-actions">
+            <button class="btn btn-secondary" style="flex:1" onclick="closeModalMeal()">Anuluj</button>
+            <button class="btn btn-primary"   style="flex:2; margin-top:0;" onclick="saveMealList()">💾 Zapisz</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL SZCZEGÓŁÓW ZAMÓWIENIA ════════════════════ -->
+<div id="modal-order" class="modal-overlay" style="display:none;" onclick="closeOrderModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:560px;">
+        <h3 id="modal-order-title" style="font-family:'Pacifico',cursive; font-size:18px; color:var(--navy); margin-bottom:4px;"></h3>
+        <p id="modal-order-meta" style="font-size:12px; color:var(--text-sub); margin-bottom:20px;"></p>
+
+        <p class="section-title" style="margin-top:0;">Aktualne zamówienie</p>
+        <div id="modal-order-current"></div>
+
+        <div id="modal-order-history-wrap" style="display:none; margin-top:18px;">
+            <p class="section-title">Historia edycji</p>
+            <div id="modal-order-history"></div>
+        </div>
+
+        <div class="modal-actions" style="margin-top:20px;">
+            <button class="btn btn-secondary" onclick="closeOrderModal()">Zamknij</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL POTWIERDZENIA USUNIĘCIA ══════════════════ -->
+<div id="modal-confirm-delete" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:380px; text-align:center;">
+        <div style="font-size:40px; margin-bottom:12px;">🗑️</div>
+        <h3 style="font-family:'Nunito',sans-serif; font-size:16px;">Czy na pewno usunąć tę listę?</h3>
+        <p style="font-size:13px; color:var(--text-sub); margin:10px 0 20px;">Tej operacji nie można cofnąć.</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" style="flex:1" onclick="closeDeleteModal()">Anuluj</button>
+            <button class="btn btn-primary"   style="flex:1; margin-top:0; background:#d62828;"
+                    onclick="confirmDelete()">Usuń</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STAN
+═══════════════════════════════════════════════════════ */
+let clubLists      = [];
+let mealLists      = [];
+let allOrders      = [];
+let orderMap       = {};   // index → order object (dla modalu)
+let selectedOrders = new Set();
+
+let editingClubId = null;
+let editingMealId = null;
+let deleteCallback = null;
+
+/* ═══════════════════════════════════════════════════════
+   ŁADOWANIE DANYCH
+═══════════════════════════════════════════════════════ */
+async function loadAll() {
+    await Promise.all([loadClubLists(), loadMealLists(), loadHashtag(), loadOrders()]);
+}
+
+async function loadClubLists() {
+    const r = await fetch('/api/club-lists', { credentials: 'include' });
+    clubLists = await r.json();
+    renderClubLists();
+}
+
+async function loadMealLists() {
+    const r = await fetch('/api/meal-lists', { credentials: 'include' });
+    mealLists = await r.json();
+    renderMealLists();
+}
+
+async function loadHashtag() {
+    const r = await fetch('/api/hashtag', { credentials: 'include' });
+    const d = await r.json();
+    document.getElementById('hashtag-input').value = d.hashtag || '';
+}
+
+async function loadOrders() {
+    const r = await fetch('/api/submissions', { credentials: 'include' });
+    const d = await r.json();
+    allOrders = d.orders || [];
+
+    /* Wypełnij filtry */
+    const clubSel = document.getElementById('filter-club');
+    const hashSel = document.getElementById('filter-hashtag');
+    clubSel.innerHTML = '<option value="">Wszystkie kluby</option>';
+    hashSel.innerHTML = '<option value="">Wszystkie hashtagi</option>';
+    (d.clubs || []).forEach(c => {
+        const o = document.createElement('option'); o.value = o.textContent = c;
+        clubSel.appendChild(o);
+    });
+    (d.hashtags || []).forEach(h => {
+        const o = document.createElement('option'); o.value = o.textContent = h;
+        hashSel.appendChild(o);
+    });
+
+    renderOrders(allOrders);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDEROWANIE KAFELKÓW KLUBÓW
+═══════════════════════════════════════════════════════ */
+function renderClubLists() {
+    const grid = document.getElementById('club-lists-grid');
+    grid.innerHTML = '';
+
+    if (!clubLists.length) {
+        grid.innerHTML = '<p class="empty-state">Brak list klubów.</p>';
+        return;
+    }
+
+    clubLists.forEach(list => {
+        const tile = document.createElement('div');
+        tile.className = 'list-tile' + (list.active ? ' is-active' : '');
+
+        const clubs = list.clubs || [];
+        const preview = clubs.slice(0, 4)
+            .map(c => `${c.name} (${c.count} zaw.)`)
+            .join('<br>') + (clubs.length > 4 ? `<br>…i ${clubs.length-4} więcej` : '');
+
+        tile.innerHTML = `
+            <div class="tile-name">
+                ${list.name}
+                ${list.active ? '<span class="badge-active">AKTYWNA</span>' : ''}
+            </div>
+            <div class="tile-preview">${preview || '<em>pusta lista</em>'}</div>
+            <div class="tile-actions">
+                <button class="tile-btn tile-btn-edit"   onclick="openEditClubList(${list.id})">Edytuj</button>
+                ${!list.active ? `<button class="tile-btn tile-btn-activate" onclick="activateClubList(${list.id})">Aktywuj</button>` : ''}
+                <button class="tile-btn tile-btn-delete" onclick="askDeleteClubList(${list.id})">Usuń</button>
+            </div>`;
+        grid.appendChild(tile);
+    });
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDEROWANIE KAFELKÓW DAŃ
+═══════════════════════════════════════════════════════ */
+function renderMealLists() {
+    const grid = document.getElementById('meal-lists-grid');
+    grid.innerHTML = '';
+
+    if (!mealLists.length) {
+        grid.innerHTML = '<p class="empty-state">Brak menu.</p>';
+        return;
+    }
+
+    mealLists.forEach(list => {
+        const tile = document.createElement('div');
+        tile.className = 'list-tile' + (list.active ? ' is-active' : '');
+
+        const days = list.days || [];
+        const preview = days.slice(0, 3)
+            .map(d => `<strong>${d.day}:</strong> ${(d.dishes||[]).join(', ')}`)
+            .join('<br>') + (days.length > 3 ? `<br>…i ${days.length-3} dni więcej` : '');
+
+        tile.innerHTML = `
+            <div class="tile-name">
+                ${list.name}
+                ${list.active ? '<span class="badge-active">AKTYWNE</span>' : ''}
+            </div>
+            <div class="tile-preview">${preview || '<em>puste menu</em>'}</div>
+            <div class="tile-actions">
+                <button class="tile-btn tile-btn-edit"   onclick="openEditMealList(${list.id})">Edytuj</button>
+                ${!list.active ? `<button class="tile-btn tile-btn-activate" onclick="activateMealList(${list.id})">Aktywuj</button>` : ''}
+                <button class="tile-btn tile-btn-delete" onclick="askDeleteMealList(${list.id})">Usuń</button>
+            </div>`;
+        grid.appendChild(tile);
+    });
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDEROWANIE ZAMÓWIEŃ
+═══════════════════════════════════════════════════════ */
+function renderOrders(orders) {
+    const container = document.getElementById('orders-container');
+    orderMap = {};
+    selectedOrders = new Set();
+    updateSelectionUI();
+
+    if (!orders.length) {
+        container.innerHTML = '<p class="empty-state">Brak zamówień spełniających kryteria.</p>';
+        return;
+    }
+    container.innerHTML = orders.map((o, i) => {
+        orderMap[i] = o;
+        const daysHtml = Object.entries(o.orders || {}).map(([day, dishes]) => {
+            const dishesHtml = Object.entries(dishes).map(([d, c]) => `${d}: ${c}`).join(' · ');
+            return `<div class="order-day"><strong>${day}</strong>${dishesHtml}</div>`;
+        }).join('');
+
+        const edits = (o.edit_history || []).length;
+        const editBadge = edits > 0
+            ? `<span style="font-size:11px; color:var(--water-dark); font-weight:800;">
+                 ✏️ ${edits} ${edits === 1 ? 'edycja' : 'edycje'}
+               </span>`
+            : '';
+        const updatedBadge = o.updated_at && o.updated_at !== o.date
+            ? `<span style="font-size:11px; color:var(--text-sub);">zaktualizowano: ${o.updated_at}</span>`
+            : '';
+
+        return `
+        <div class="order-card" id="order-card-${i}" onclick="openOrderModal(${i})">
+            <div class="order-card-head">
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <input type="checkbox" class="order-sel-cb"
+                        onclick="event.stopPropagation()"
+                        onchange="toggleOrderSelection(${i}, this.checked)">
+                    <div>
+                        <div class="order-club">⚓ ${o.club_name}</div>
+                        <div class="order-meta" style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <span>📅 ${o.date}</span>${updatedBadge}${editBadge}
+                        </div>
+                    </div>
+                </div>
+                ${o.hashtag ? `<span class="order-hashtag">${o.hashtag}</span>` : ''}
+            </div>
+            <div class="order-days">${daysHtml || '—'}</div>
+        </div>`;
+    }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   ZAZNACZANIE I POBIERANIE
+═══════════════════════════════════════════════════════ */
+function toggleOrderSelection(index, checked) {
+    if (checked) selectedOrders.add(index);
+    else         selectedOrders.delete(index);
+    const card = document.getElementById(`order-card-${index}`);
+    if (card) card.classList.toggle('is-selected', checked);
+    updateSelectionUI();
+}
+
+function toggleSelectAll(checked) {
+    Object.keys(orderMap).forEach(k => {
+        const idx = parseInt(k);
+        const cb  = document.querySelector(`#order-card-${idx} .order-sel-cb`);
+        if (cb) cb.checked = checked;
+        if (checked) selectedOrders.add(idx);
+        else         selectedOrders.delete(idx);
+        const card = document.getElementById(`order-card-${idx}`);
+        if (card) card.classList.toggle('is-selected', checked);
+    });
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    const count        = selectedOrders.size;
+    const totalVisible = Object.keys(orderMap).length;
+    const countLabel   = document.getElementById('sel-count-label');
+    const downloadBtn  = document.getElementById('download-btn');
+    const selAllCb     = document.getElementById('select-all-checkbox');
+
+    if (countLabel)  countLabel.textContent = `Wybrano: ${count}`;
+    if (downloadBtn) downloadBtn.disabled   = count === 0;
+    if (selAllCb) {
+        selAllCb.checked       = totalVisible > 0 && count === totalVisible;
+        selAllCb.indeterminate = count > 0 && count < totalVisible;
+    }
+}
+
+function downloadOrders() {
+    const orders = [...selectedOrders].map(i => orderMap[i]).filter(Boolean);
+    if (!orders.length) return;
+
+    /* Nagłówki CSV */
+    const rows = [['Klub', 'Hashtag', 'Data złożenia', 'Ostatnia aktualizacja', 'Dzień', 'Danie', 'Ilość']];
+
+    orders.forEach(o => {
+        const days    = o.orders || {};
+        const dayKeys = Object.keys(days);
+        if (dayKeys.length === 0) {
+            rows.push([o.club_name, o.hashtag || '', o.date || '', o.updated_at || '', '', '', '']);
+        } else {
+            dayKeys.forEach(day => {
+                const dishes = days[day] || {};
+                Object.entries(dishes).forEach(([dish, count]) => {
+                    rows.push([
+                        o.club_name, o.hashtag || '',
+                        o.date || '', o.updated_at || '',
+                        day, dish, count
+                    ]);
+                });
+            });
+        }
+    });
+
+    /* Escapowanie pól CSV */
+    const csvContent = rows.map(r =>
+        r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\r\n');
+
+    /* BOM UTF-8 dla Excela */
+    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `zamowienia_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL SZCZEGÓŁÓW ZAMÓWIENIA
+═══════════════════════════════════════════════════════ */
+function renderOrderDays(orders) {
+    return Object.entries(orders || {}).map(([day, dishes]) => {
+        const rows = Object.entries(dishes).map(([d, c]) =>
+            `<div style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
+                <span>${d}</span><span style="font-weight:800;">${c} porcji</span>
+             </div>`
+        ).join('');
+        return `<div style="margin-bottom:10px;">
+            <div class="history-day">${day}</div>${rows}
+        </div>`;
+    }).join('') || '<em style="font-size:13px; color:var(--text-sub);">Brak danych</em>';
+}
+
+function openOrderModal(index) {
+    const o = orderMap[index];
+    if (!o) return;
+
+    document.getElementById('modal-order-title').textContent = `⚓ ${o.club_name}`;
+    document.getElementById('modal-order-meta').innerHTML =
+        `Złożono: ${o.date}` +
+        (o.updated_at && o.updated_at !== o.date ? ` · Ostatnia edycja: ${o.updated_at}` : '') +
+        (o.hashtag ? ` · <span style="color:var(--water-dark); font-weight:800;">${o.hashtag}</span>` : '');
+
+    document.getElementById('modal-order-current').innerHTML = renderOrderDays(o.orders);
+
+    const history = o.edit_history || [];
+    const histWrap = document.getElementById('modal-order-history-wrap');
+    const histEl   = document.getElementById('modal-order-history');
+
+    if (history.length > 0) {
+        histWrap.style.display = 'block';
+        histEl.innerHTML = [...history].reverse().map(h => `
+            <details class="history-entry">
+                <summary>
+                    <span>Wersja ${h.version}</span>
+                    <span>${(h.edited_at || '').replace('T', ' ').slice(0,16)}</span>
+                </summary>
+                <div class="history-dishes">${renderOrderDays(h.orders)}</div>
+            </details>`
+        ).join('');
+    } else {
+        histWrap.style.display = 'none';
+    }
+
+    document.getElementById('modal-order').style.display = 'flex';
+}
+
+function closeOrderModal(e) {
+    if (!e || e.target === document.getElementById('modal-order'))
+        document.getElementById('modal-order').style.display = 'none';
+}
+
+function filterOrders() {
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const club   = document.getElementById('filter-club').value;
+    const hash   = document.getElementById('filter-hashtag').value;
+
+    const filtered = allOrders.filter(o => {
+        if (search && !o.club_name.toLowerCase().includes(search)) return false;
+        if (club   && o.club_name !== club)   return false;
+        if (hash   && o.hashtag  !== hash)    return false;
+        return true;
+    });
+    renderOrders(filtered);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PARSERY FORMATU PLIKU / TEKSTOWEGO
+═══════════════════════════════════════════════════════ */
+function gen6() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function parseClubText(text, autoFill = true) {
+    return text.split('\n')
+        .map(l => l.trim()).filter(l => l)
+        .map(l => {
+            const parts = l.split(',').map(p => p.trim());
+            const name     = parts[0] || '';
+            const countRaw = parts[1] ? parseInt(parts[1]) : null;
+            const passRaw  = parts[2] || '';
+            return {
+                name,
+                count:    countRaw !== null ? (countRaw || 0) : (autoFill ? 4 : 0),
+                password: passRaw || (autoFill ? gen6() : '')
+            };
+        }).filter(c => c.name);
+}
+
+function clubsToText(clubs) {
+    return (clubs || []).map(c => `${c.name}, ${c.count}, ${c.password}`).join('\n');
+}
+
+/* Uzupełnij brakujące wartości i pokaż w textarea */
+function applyClubDefaults() {
+    const text  = document.getElementById('edit-club-content').value;
+    const clubs = parseClubText(text, true);
+    document.getElementById('edit-club-content').value = clubsToText(clubs);
+}
+
+function parseMealText(text) {
+    return text.split('\n')
+        .map(l => l.trim()).filter(l => l)
+        .map(l => {
+            const colonIdx = l.indexOf(':');
+            if (colonIdx === -1) return null;
+            const day    = l.slice(0, colonIdx).trim();
+            const dishes = l.slice(colonIdx + 1).split(';').map(d => d.trim()).filter(d => d);
+            return { day, dishes };
+        }).filter(Boolean);
+}
+
+function daysToText(days) {
+    return (days || []).map(d => `${d.day}: ${(d.dishes||[]).join(';')}`).join('\n');
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL KLUBY – OTWIERANIE
+═══════════════════════════════════════════════════════ */
+function openNewClubList() {
+    editingClubId = null;
+    document.getElementById('modal-club-title').textContent = 'Nowa lista klubów';
+    document.getElementById('edit-club-name').value    = '';
+    document.getElementById('edit-club-content').value = '';
+    document.getElementById('club-filename').textContent = 'brak pliku';
+    document.getElementById('modal-club').style.display = 'flex';
+}
+
+function openEditClubList(id) {
+    editingClubId = id;
+    const list = clubLists.find(l => l.id === id);
+    if (!list) return;
+    document.getElementById('modal-club-title').textContent = 'Edytuj listę klubów';
+    document.getElementById('edit-club-name').value    = list.name;
+    document.getElementById('edit-club-content').value = clubsToText(list.clubs);
+    document.getElementById('club-filename').textContent = 'brak pliku';
+    document.getElementById('modal-club').style.display = 'flex';
+}
+
+function closeModalClub(e) {
+    if (!e || e.target === document.getElementById('modal-club'))
+        document.getElementById('modal-club').style.display = 'none';
+}
+
+function loadClubFile() {
+    const file = document.getElementById('club-file-input').files[0];
+    if (!file) return;
+    document.getElementById('club-filename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('edit-club-content').value = e.target.result;
+    };
+    reader.readAsText(file);
+}
+
+async function saveClubList() {
+    const name  = document.getElementById('edit-club-name').value.trim();
+    const text  = document.getElementById('edit-club-content').value;
+    const clubs = parseClubText(text);
+
+    if (!name) { alert('Podaj nazwę listy.'); return; }
+
+    const body = { name, clubs };
+
+    if (editingClubId === null) {
+        await fetch('/api/club-lists', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+    } else {
+        await fetch(`/api/club-lists/${editingClubId}`, {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+    }
+    document.getElementById('modal-club').style.display = 'none';
+    loadClubLists();
+}
+
+async function activateClubList(id) {
+    await fetch(`/api/club-lists/${id}/activate`, { method: 'POST', credentials: 'include' });
+    loadClubLists();
+}
+
+function askDeleteClubList(id) {
+    deleteCallback = async () => {
+        await fetch(`/api/club-lists/${id}`, { method: 'DELETE', credentials: 'include' });
+        loadClubLists();
+    };
+    document.getElementById('modal-confirm-delete').style.display = 'flex';
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL DANIA – OTWIERANIE
+═══════════════════════════════════════════════════════ */
+function openNewMealList() {
+    editingMealId = null;
+    document.getElementById('modal-meal-title').textContent = 'Nowe menu';
+    document.getElementById('edit-meal-name').value    = '';
+    document.getElementById('edit-meal-content').value = '';
+    document.getElementById('meal-filename').textContent = 'brak pliku';
+    document.getElementById('modal-meal').style.display = 'flex';
+}
+
+function openEditMealList(id) {
+    editingMealId = id;
+    const list = mealLists.find(l => l.id === id);
+    if (!list) return;
+    document.getElementById('modal-meal-title').textContent = 'Edytuj menu';
+    document.getElementById('edit-meal-name').value    = list.name;
+    document.getElementById('edit-meal-content').value = daysToText(list.days);
+    document.getElementById('meal-filename').textContent = 'brak pliku';
+    document.getElementById('modal-meal').style.display = 'flex';
+}
+
+function closeModalMeal(e) {
+    if (!e || e.target === document.getElementById('modal-meal'))
+        document.getElementById('modal-meal').style.display = 'none';
+}
+
+function loadMealFile() {
+    const file = document.getElementById('meal-file-input').files[0];
+    if (!file) return;
+    document.getElementById('meal-filename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('edit-meal-content').value = e.target.result;
+    };
+    reader.readAsText(file);
+}
+
+async function saveMealList() {
+    const name = document.getElementById('edit-meal-name').value.trim();
+    const text = document.getElementById('edit-meal-content').value;
+    const days = parseMealText(text);
+
+    if (!name) { alert('Podaj nazwę menu.'); return; }
+
+    const body = { name, days };
+
+    if (editingMealId === null) {
+        await fetch('/api/meal-lists', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+    } else {
+        await fetch(`/api/meal-lists/${editingMealId}`, {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+    }
+    document.getElementById('modal-meal').style.display = 'none';
+    loadMealLists();
+}
+
+async function activateMealList(id) {
+    await fetch(`/api/meal-lists/${id}/activate`, { method: 'POST', credentials: 'include' });
+    loadMealLists();
+}
+
+function askDeleteMealList(id) {
+    deleteCallback = async () => {
+        await fetch(`/api/meal-lists/${id}`, { method: 'DELETE', credentials: 'include' });
+        loadMealLists();
+    };
+    document.getElementById('modal-confirm-delete').style.display = 'flex';
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL USUŃ
+═══════════════════════════════════════════════════════ */
+function closeDeleteModal() {
+    document.getElementById('modal-confirm-delete').style.display = 'none';
+    deleteCallback = null;
+}
+
+async function confirmDelete() {
+    if (deleteCallback) await deleteCallback();
+    closeDeleteModal();
+}
+
+/* ═══════════════════════════════════════════════════════
+   HASHTAG
+═══════════════════════════════════════════════════════ */
+async function saveHashtag() {
+    const value = document.getElementById('hashtag-input').value.trim();
+    await fetch('/api/hashtag', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hashtag: value })
+    });
+    const msg = document.getElementById('hashtag-saved');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 2500);
+}
+
+/* ═══════════════════════════════════════════════════════
+   START
+═══════════════════════════════════════════════════════ */
+loadAll();
+</script>
+</body>
+</html>

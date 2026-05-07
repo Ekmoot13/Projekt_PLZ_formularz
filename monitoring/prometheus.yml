@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s # Pytamy aplikację o stan co 5 sekund
+
+scrape_configs:
+  - job_name: 'flask_backend'
+    static_configs:
+      - targets: ['backend_service:5000'] # Nazwa kontenera z Pythonem

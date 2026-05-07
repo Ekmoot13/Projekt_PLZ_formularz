@@ -1,0 +1,468 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap');
+
+/* ============================================================
+   PALETA — ŻEGLARSKA NIEBIESKA
+   ============================================================ */
+:root {
+    --sky:        #d4ecf7;   /* jasne niebo */
+    --sky-mid:    #b0d9ef;   /* środkowe niebo */
+    --water:      #4a9abb;   /* woda */
+    --water-dark: #2c6e8a;   /* głęboka woda */
+    --land:       #5aaa6e;   /* łąka/brzeg */
+    --land-dark:  #3d7a4e;   /* ciemny ląd */
+    --navy:       #1a3560;   /* tekst/granat */
+    --navy-light: #2c5282;   /* przycisk hover */
+    --red:        #d62828;   /* logo PLŻ */
+    --white:      #ffffff;
+    --input-bg:   #b8d8ea;   /* tło pól = jak na screenie */
+    --input-bg2:  #c8e4f0;   /* hover pola */
+    --card-bg:    rgba(255,255,255,0.82);
+    --shadow:     rgba(26,53,96,0.14);
+    --text:       #1a3560;
+    --text-sub:   #4a6fa5;
+    --border:     rgba(26,53,96,0.12);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    min-height: 100vh;
+    font-family: 'Nunito', sans-serif;
+    color: var(--text);
+}
+
+/* ============================================================
+   TAŁO — GRADIENT NIEBO + ILUSTRACJA
+   ============================================================ */
+body {
+    background: linear-gradient(175deg, #d4ecf7 0%, #b8ddf0 40%, #90c8e6 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Chmurki jako pseudo-elementy na tle */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(ellipse 120px 55px at 15% 12%, rgba(255,255,255,0.72) 0%, transparent 100%),
+        radial-gradient(ellipse 90px 40px at 25% 8%,  rgba(255,255,255,0.55) 0%, transparent 100%),
+        radial-gradient(ellipse 140px 60px at 72% 6%, rgba(255,255,255,0.68) 0%, transparent 100%),
+        radial-gradient(ellipse 80px 36px at 82% 10%, rgba(255,255,255,0.5)  0%, transparent 100%),
+        radial-gradient(ellipse 60px 28px at 50% 18%, rgba(255,255,255,0.4)  0%, transparent 100%);
+    z-index: 0;
+}
+
+/* ============================================================
+   ILUSTRACJA MORSKA — DOLNA CZĘŚĆ BODY
+   Rysowana SVG wbudowana przez ::after
+   ============================================================ */
+.sea-scene {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 220px;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 16px 240px;
+}
+
+/* ============================================================
+   LOGO PLŻ
+   ============================================================ */
+.plz-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.plz-logo svg {
+    width: 50px;
+    height: 50px;
+    filter: drop-shadow(0 2px 6px rgba(214,40,40,0.35));
+}
+
+.plz-logo__text {
+    font-family: 'Pacifico', cursive;
+    font-size: 20px;
+    color: var(--red);
+    line-height: 1.15;
+}
+
+.plz-logo__sub {
+    font-family: 'Nunito', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--navy);
+    display: block;
+}
+
+/* ============================================================
+   KARTA (card)
+   ============================================================ */
+.card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 28px;
+    padding: 38px 36px 32px;
+    box-shadow:
+        0 8px 32px var(--shadow),
+        0 1px 0 rgba(255,255,255,0.7) inset;
+    border: 1.5px solid rgba(255,255,255,0.6);
+}
+
+/* ============================================================
+   NAGŁÓWKI
+   ============================================================ */
+.card__title {
+    font-family: 'Pacifico', cursive;
+    font-size: 24px;
+    color: var(--navy);
+    text-align: center;
+    margin-bottom: 4px;
+    font-weight: 400;
+}
+
+.card__sub {
+    font-size: 13px;
+    color: var(--text-sub);
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.section-title {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--water-dark);
+    margin: 26px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px dashed rgba(74,154,187,0.35);
+}
+
+/* ============================================================
+   FORMULARZ — POLA (wzorowane na screenie)
+   ============================================================ */
+.field {
+    margin-bottom: 18px;
+}
+
+.field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 7px;
+}
+
+.field input[type="text"],
+.field input[type="number"],
+.field input[type="email"],
+.field input[type="tel"],
+.field input[type="password"],
+.field select {
+    width: 100%;
+    background: var(--input-bg);
+    border: none;
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--navy);
+    outline: none;
+    transition: background 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+}
+
+.field input:focus,
+.field select:focus {
+    background: var(--input-bg2);
+    box-shadow: 0 0 0 3px rgba(74,154,187,0.35);
+}
+
+.field input::placeholder {
+    color: var(--water-dark);
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+/* ============================================================
+   LISTA PRODUKTÓW z licznikami
+   ============================================================ */
+.products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.product-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--input-bg);
+    border-radius: 14px;
+    padding: 12px 16px;
+    transition: background 0.2s;
+}
+
+.product-row:hover {
+    background: var(--input-bg2);
+}
+
+.product-row__name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    flex: 1;
+}
+
+.counter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.counter__btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: var(--water-dark);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+
+.counter__btn:hover {
+    background: var(--navy);
+    transform: scale(1.1);
+}
+
+.counter__val {
+    width: 36px;
+    text-align: center;
+    background: transparent;
+    border: none;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--navy);
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.counter__val::-webkit-inner-spin-button,
+.counter__val::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* ============================================================
+   PRZYCISKI
+   ============================================================ */
+.btn {
+    display: block;
+    width: 100%;
+    padding: 15px 24px;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.22s ease;
+    letter-spacing: 0.3px;
+}
+
+.btn-primary {
+    background: var(--navy);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(26,53,96,0.3);
+    margin-top: 28px;
+}
+
+.btn-primary:hover {
+    background: var(--water-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(26,53,96,0.38);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-sub);
+    border: 2px solid rgba(26,53,96,0.18);
+    margin-top: 10px;
+}
+
+.btn-secondary:hover {
+    background: rgba(26,53,96,0.06);
+    color: var(--navy);
+}
+
+/* BIG CTA na stronie głównej */
+.btn-cta {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 6px 24px rgba(214,40,40,0.35);
+    font-size: 17px;
+    padding: 18px 24px;
+    margin-top: 32px;
+}
+
+.btn-cta:hover {
+    background: #b91c1c;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(214,40,40,0.45);
+}
+
+/* ============================================================
+   KOMUNIKAT SUKCESU
+   ============================================================ */
+.msg-success {
+    display: none;
+    background: rgba(90,170,110,0.18);
+    color: #2d6a3f;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 16px;
+}
+
+/* ============================================================
+   ADMIN — lista opcji
+   ============================================================ */
+.options-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.options-list li {
+    background: var(--input-bg);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.options-list li::before {
+    content: '⚓';
+    font-size: 12px;
+}
+
+.add-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.add-row .field {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.add-row .btn {
+    width: auto;
+    padding: 14px 20px;
+    margin-top: 0;
+    flex-shrink: 0;
+    border-radius: 14px;
+}
+
+/* SUBMISSION CARD */
+.submission-card {
+    background: var(--input-bg);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    border-left: 5px solid var(--red);
+}
+
+.submission-card h3 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 6px;
+}
+
+.submission-card p {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 4px;
+}
+
+.submission-card em {
+    font-size: 11px;
+    color: #7a95bb;
+}
+
+hr.divider {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, transparent, rgba(74,154,187,0.3), transparent);
+    margin: 28px 0;
+}
+
+/* ============================================================
+   STRONA GŁÓWNA — hero tekst
+   ============================================================ */
+.hero-emoji {
+    font-size: 52px;
+    text-align: center;
+    margin-bottom: 8px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 520px) {
+    .card { padding: 28px 20px 24px; border-radius: 22px; }
+    .page { padding: 20px 12px 220px; }
+}

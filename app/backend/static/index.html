@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polska Liga Żeglarska</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+body { background: none; overflow: hidden; }
+body::before { display: none; }
+
+/* ─── TŁO SCENY ─────────────────────────────────────────── */
+#scene {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden;
+    background: linear-gradient(180deg,
+        #4a8fc4 0%, #6bbce0 18%, #8ecde9 38%,
+        #aaddf4 55%, #c2ecfb 63%,
+        #4a9abb 63%, #2c6e8a 80%, #1a4f6a 100%);
+}
+
+/* ─── FALE WODY ─────────────────────────────────────────── */
+#waves-wrap {
+    position: absolute; left: 0; right: 0;
+    bottom: 0; height: 40%; overflow: hidden; z-index: 4;
+    pointer-events: none;
+}
+#wave-svg { width: 200%; height: 100%; animation: wave-scroll 9s linear infinite; }
+@keyframes wave-scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* ─── WYSPY ──────────────────────────────────────────────── */
+/* Wyspy są duże, sięgają od dołu ekranu do ~20% od góry */
+.island-wrap {
+    position: absolute;
+    bottom: 0;
+    z-index: 3;
+    pointer-events: none;
+    /* szerokość rośnie gdy ekran maleje */
+    width: clamp(240px, 28vw, 420px);
+    /* KLUCZOWE: explicite wysokość by wyspa wystawała nad wodę */
+    height: 80vh;
+}
+#island-l { left: 0; }
+#island-r { right: 0; transform: scaleX(-1); }
+
+/* ─── MEWY ───────────────────────────────────────────────── */
+#gulls { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.gull  { position: absolute; top: var(--gy); }
+.gull:not(.rtl) { animation: gfly  var(--gd) linear var(--gx) infinite; }
+.gull.rtl       { animation: gflyr var(--gd) linear var(--gx) infinite; }
+@keyframes gfly  { from{transform:translateX(-90px) scale(var(--gs,1))} to{transform:translateX(calc(100vw + 90px)) scale(var(--gs,1))} }
+@keyframes gflyr { from{transform:translateX(calc(100vw + 90px)) scale(var(--gs,1)) scaleX(-1)} to{transform:translateX(-90px) scale(var(--gs,1)) scaleX(-1)} }
+.gull .wl { transform-origin: 20px 8px; animation: gwl var(--gf,.55s) ease-in-out infinite alternate; }
+.gull .wr { transform-origin: 20px 8px; animation: gwr var(--gf,.55s) ease-in-out infinite alternate; }
+@keyframes gwl { from{transform:rotate(-26deg)} to{transform:rotate(16deg)}  }
+@keyframes gwr { from{transform:rotate(26deg)}  to{transform:rotate(-16deg)} }
+
+/* ─── ŁÓDKA ──────────────────────────────────────────────── */
+#boat-wrap {
+    position: fixed; top: 0; left: 0; z-index: 50;
+    pointer-events: none; width: 0; height: 0; overflow: visible;
+}
+#boat {
+    pointer-events: all;
+    transform-origin: 40px 44px;
+    will-change: transform;
+    cursor: default;
+}
+#boat.capsized { cursor: pointer; }
+.boat-buried { display: none; }
+#boat.capsized .boat-normal { display: none; }
+#boat.capsized .boat-buried { display: block; }
+
+#hint {
+    position: absolute; top: -46px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26,53,96,.92); color: #fff;
+    font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+    padding: 5px 12px; border-radius: 10px; white-space: nowrap;
+    pointer-events: none; display: none;
+}
+#hint::after {
+    content:''; position: absolute; top:100%; left:50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: rgba(26,53,96,.92);
+}
+
+/* ─── PAGE ───────────────────────────────────────────────── */
+.page { position: relative; z-index: 20; pointer-events: none; }
+.card, .card *, a, button, input, select { pointer-events: all; }
+.plz-logo { pointer-events: none; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SCENA ══════════════════════════════════════════════ -->
+<div id="scene" aria-hidden="true">
+
+    <!-- WYSPA LEWA — SVG wypełnia kontener (preserveAspectRatio=none) -->
+    <div class="island-wrap" id="island-l">
+        <svg viewBox="0 0 340 520" xmlns="http://www.w3.org/2000/svg"
+             width="100%" height="100%" preserveAspectRatio="none">
+
+            <!-- Cień pod wyspą w wodzie -->
+            <ellipse cx="170" cy="515" rx="180" ry="14" fill="#1a4f6a" opacity=".4"/>
+
+            <!-- Gradient wzgórza — ciemny las -->
+            <path d="M0 520 L0 320 Q25 280 55 245 Q80 215 100 185 Q122 150 142 122
+                     Q162 95 175 68 Q183 48 190 28
+                     Q197 48 205 72 Q218 100 232 128
+                     Q248 158 265 188 Q285 218 306 248
+                     Q328 282 340 318 L340 520 Z"
+                  fill="#1a4218"/>
+
+            <!-- Środkowe drzewa -->
+            <path d="M0 390 Q22 350 50 318 Q75 292 96 268 Q116 245 132 220
+                     Q148 196 160 172 Q170 150 176 130 Q181 112 184 95
+                     Q187 112 192 132 Q202 158 216 184 Q232 210 248 234
+                     Q266 260 284 286 Q306 316 328 350 L340 382 L340 520 L0 520 Z"
+                  fill="#2a5e28"/>
+
+            <!-- Jasny las / trawa wyżej -->
+            <path d="M0 440 Q32 410 68 390 Q100 372 128 355 Q150 340 166 326
+                     Q178 314 184 302 Q190 314 198 327 Q214 342 238 358
+                     Q268 376 300 396 Q322 413 340 435 L340 520 L0 520 Z"
+                  fill="#3a7a42"/>
+
+            <!-- Jasna trawa / piasek (górna warstwa plaży) -->
+            <path d="M0 474 Q38 456 80 447 Q118 438 150 433
+                     Q168 430 184 428 Q200 430 218 433
+                     Q254 439 295 450 Q322 460 340 474
+                     L340 520 L0 520 Z"
+                  fill="#5aaa6e"/>
+
+            <!-- Piasek plaży -->
+            <path d="M0 498 Q50 486 102 481 Q148 477 184 475
+                     Q220 477 272 482 Q308 488 340 498
+                     L340 520 L0 520 Z"
+                  fill="#e8d070"/>
+
+            <!-- Mokry piasek / woda -->
+            <path d="M0 512 Q85 506 170 504 Q255 506 340 512 L340 520 L0 520 Z"
+                  fill="#d4a855"/>
+
+            <!-- Fale na plaży -->
+            <path d="M8 504 Q58 499 108 503 Q158 507 208 503 Q258 499 308 503"
+                  fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5"/>
+            <path d="M4 510 Q54 507 104 510 Q154 513 204 510 Q254 507 304 510"
+                  fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.8"/>
+
+            <!-- Kamienie -->
+            <ellipse cx="88"  cy="490" rx="13" ry="6.5" fill="#c49a3a" opacity=".75"/>
+            <ellipse cx="245" cy="492" rx="10" ry="5"   fill="#b8882a" opacity=".65"/>
+            <ellipse cx="158" cy="488" rx="8"  ry="4"   fill="#c8a040" opacity=".7"/>
+
+            <!-- Krab 1 -->
+            <g transform="translate(68,494)">
+                <ellipse cx="0" cy="0" rx="9" ry="5.5" fill="#c04800"/>
+                <line x1="-5" y1="-2" x2="-11" y2="-7" stroke="#c04800" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="5" y1="-2"  x2="11" y2="-7"  stroke="#c04800" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="-7" y1="2"  x2="-12" y2="7"  stroke="#c04800" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="7" y1="2"   x2="12" y2="7"   stroke="#c04800" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="-4" cy="-6" r="2.2" fill="#111"/>
+                <circle cx="4"  cy="-6" r="2.2" fill="#111"/>
+            </g>
+
+            <!-- Krab 2 (mniejszy) -->
+            <g transform="translate(228,496)">
+                <ellipse cx="0" cy="0" rx="7" ry="4.2" fill="#b03800"/>
+                <line x1="-4" y1="-2" x2="-9" y2="-5"  stroke="#b03800" stroke-width="1.3" stroke-linecap="round"/>
+                <line x1="4" y1="-2"  x2="9" y2="-5"   stroke="#b03800" stroke-width="1.3" stroke-linecap="round"/>
+                <line x1="-5" y1="2"  x2="-9" y2="5"   stroke="#b03800" stroke-width="1.3" stroke-linecap="round"/>
+                <line x1="5" y1="2"   x2="9" y2="5"    stroke="#b03800" stroke-width="1.3" stroke-linecap="round"/>
+                <circle cx="-3" cy="-5" r="1.8" fill="#111"/>
+                <circle cx="3"  cy="-5" r="1.8" fill="#111"/>
+            </g>
+
+            <!-- PALMA 1 — wysoka, lekko pochylona -->
+            <g transform="translate(128,426)">
+                <path d="M0 0 Q10 -52 7 -105 Q4 -158 10 -210 Q13 -240 16 -268"
+                      fill="none" stroke="#7a5210" stroke-width="12" stroke-linecap="round"/>
+                <!-- Liście duże -->
+                <path d="M16 -268 Q72 -298 96 -275 Q84 -255 52 -262Z"  fill="#2e6e12"/>
+                <path d="M16 -268 Q-42 -300 -66 -278 Q-54 -258 -22 -264Z" fill="#3a8020"/>
+                <path d="M16 -268 Q78 -256 96 -232 Q80 -218 52 -232Z"  fill="#226008"/>
+                <path d="M16 -268 Q-46 -260 -66 -236 Q-50 -222 -22 -236Z" fill="#2e6e12"/>
+                <path d="M16 -268 Q62 -238 72 -210 Q54 -200 36 -216Z"  fill="#3a8020"/>
+                <path d="M16 -268 Q-28 -242 -40 -214 Q-22 -204 0 -220Z" fill="#226008"/>
+                <path d="M16 -268 Q28 -238 24 -210 Q12 -208 10 -228Z"  fill="#1a5005"/>
+                <!-- Kokosy -->
+                <circle cx="18" cy="-262" r="9"   fill="#8B5E3C"/>
+                <circle cx="8"  cy="-254" r="8.5" fill="#7a5030"/>
+                <circle cx="24" cy="-252" r="7.5" fill="#6a4020"/>
+            </g>
+
+            <!-- PALMA 2 — po lewej, mniejsza -->
+            <g transform="translate(55, 446)">
+                <path d="M0 0 Q4 -38 3 -78 Q1 -118 4 -155 Q6 -178 8 -198"
+                      fill="none" stroke="#6e4a0c" stroke-width="10" stroke-linecap="round"/>
+                <path d="M8 -198 Q52 -222 70 -204 Q60 -188 34 -194Z"  fill="#2e6e12"/>
+                <path d="M8 -198 Q-36 -224 -54 -207 Q-44 -191 -18 -196Z" fill="#3a8020"/>
+                <path d="M8 -198 Q54 -186 68 -164 Q54 -153 30 -164Z"  fill="#226008"/>
+                <path d="M8 -198 Q-38 -188 -54 -166 Q-40 -155 -16 -165Z" fill="#2e6e12"/>
+                <path d="M8 -198 Q38 -178 46 -156 Q32 -148 18 -160Z"  fill="#3a8020"/>
+                <path d="M8 -198 Q-22 -180 -30 -158 Q-16 -150 0 -162Z" fill="#226008"/>
+                <circle cx="10" cy="-193" r="8"  fill="#8B5E3C"/>
+                <circle cx="2"  cy="-186" r="7"  fill="#7a5030"/>
+            </g>
+
+            <!-- PALMA 3 — prawa strona -->
+            <g transform="translate(215, 438)">
+                <path d="M0 0 Q-6 -44 -4 -88 Q-2 -132 -8 -172 Q-10 -198 -12 -222"
+                      fill="none" stroke="#7a5210" stroke-width="11" stroke-linecap="round"/>
+                <path d="M-12 -222 Q32 -248 54 -230 Q44 -212 18 -218Z" fill="#2e6e12"/>
+                <path d="M-12 -222 Q-56 -250 -76 -232 Q-66 -214 -40 -220Z" fill="#3a8020"/>
+                <path d="M-12 -222 Q34 -210 50 -188 Q36 -177 12 -188Z" fill="#226008"/>
+                <path d="M-12 -222 Q-58 -212 -76 -190 Q-62 -179 -38 -190Z" fill="#2e6e12"/>
+                <path d="M-12 -222 Q22 -204 30 -180 Q16 -172 2 -184Z"  fill="#3a8020"/>
+                <circle cx="-10" cy="-217" r="8.5" fill="#8B5E3C"/>
+                <circle cx="-20" cy="-210" r="7.5" fill="#7a5030"/>
+            </g>
+
+            <!-- Roślinność dolna -->
+            <ellipse cx="100" cy="478" rx="26" ry="11" fill="#3a7a42" opacity=".7"/>
+            <ellipse cx="262" cy="480" rx="20" ry="9"  fill="#2e6e12" opacity=".65"/>
+            <ellipse cx="178" cy="476" rx="17" ry="8"  fill="#4a8a52" opacity=".5"/>
+
+        </svg>
+    </div>
+
+    <!-- WYSPA PRAWA (identyczna, lustrzana przez scaleX(-1)) -->
+    <div class="island-wrap" id="island-r">
+        <svg viewBox="0 0 340 520" xmlns="http://www.w3.org/2000/svg"
+             width="100%" height="100%" preserveAspectRatio="none">
+            <ellipse cx="170" cy="515" rx="180" ry="14" fill="#1a4f6a" opacity=".4"/>
+            <path d="M0 520 L0 320 Q25 280 55 245 Q80 215 100 185 Q122 150 142 122 Q162 95 175 68 Q183 48 190 28 Q197 48 205 72 Q218 100 232 128 Q248 158 265 188 Q285 218 306 248 Q328 282 340 318 L340 520 Z" fill="#1a4218"/>
+            <path d="M0 390 Q22 350 50 318 Q75 292 96 268 Q116 245 132 220 Q148 196 160 172 Q170 150 176 130 Q181 112 184 95 Q187 112 192 132 Q202 158 216 184 Q232 210 248 234 Q266 260 284 286 Q306 316 328 350 L340 382 L340 520 L0 520 Z" fill="#2a5e28"/>
+            <path d="M0 440 Q32 410 68 390 Q100 372 128 355 Q150 340 166 326 Q178 314 184 302 Q190 314 198 327 Q214 342 238 358 Q268 376 300 396 Q322 413 340 435 L340 520 L0 520 Z" fill="#3a7a42"/>
+            <path d="M0 474 Q38 456 80 447 Q118 438 150 433 Q168 430 184 428 Q200 430 218 433 Q254 439 295 450 Q322 460 340 474 L340 520 L0 520 Z" fill="#5aaa6e"/>
+            <path d="M0 498 Q50 486 102 481 Q148 477 184 475 Q220 477 272 482 Q308 488 340 498 L340 520 L0 520 Z" fill="#e8d070"/>
+            <path d="M0 512 Q85 506 170 504 Q255 506 340 512 L340 520 L0 520 Z" fill="#d4a855"/>
+            <path d="M8 504 Q58 499 108 503 Q158 507 208 503 Q258 499 308 503" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5"/>
+            <path d="M4 510 Q54 507 104 510 Q154 513 204 510 Q254 507 304 510" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.8"/>
+            <ellipse cx="88" cy="490" rx="13" ry="6.5" fill="#c49a3a" opacity=".75"/>
+            <ellipse cx="245" cy="492" rx="10" ry="5"  fill="#b8882a" opacity=".65"/>
+            <g transform="translate(68,494)">
+                <ellipse cx="0" cy="0" rx="9" ry="5.5" fill="#c04800"/>
+                <line x1="-5" y1="-2" x2="-11" y2="-7" stroke="#c04800" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="5" y1="-2" x2="11" y2="-7" stroke="#c04800" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="-7" y1="2" x2="-12" y2="7" stroke="#c04800" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="7" y1="2" x2="12" y2="7" stroke="#c04800" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="-4" cy="-6" r="2.2" fill="#111"/>
+                <circle cx="4" cy="-6" r="2.2" fill="#111"/>
+            </g>
+            <g transform="translate(128,426)">
+                <path d="M0 0 Q10 -52 7 -105 Q4 -158 10 -210 Q13 -240 16 -268" fill="none" stroke="#7a5210" stroke-width="12" stroke-linecap="round"/>
+                <path d="M16 -268 Q72 -298 96 -275 Q84 -255 52 -262Z"  fill="#2e6e12"/>
+                <path d="M16 -268 Q-42 -300 -66 -278 Q-54 -258 -22 -264Z" fill="#3a8020"/>
+                <path d="M16 -268 Q78 -256 96 -232 Q80 -218 52 -232Z"  fill="#226008"/>
+                <path d="M16 -268 Q-46 -260 -66 -236 Q-50 -222 -22 -236Z" fill="#2e6e12"/>
+                <path d="M16 -268 Q62 -238 72 -210 Q54 -200 36 -216Z"  fill="#3a8020"/>
+                <path d="M16 -268 Q-28 -242 -40 -214 Q-22 -204 0 -220Z" fill="#226008"/>
+                <path d="M16 -268 Q28 -238 24 -210 Q12 -208 10 -228Z"  fill="#1a5005"/>
+                <circle cx="18" cy="-262" r="9"   fill="#8B5E3C"/>
+                <circle cx="8"  cy="-254" r="8.5" fill="#7a5030"/>
+                <circle cx="24" cy="-252" r="7.5" fill="#6a4020"/>
+            </g>
+            <g transform="translate(55, 446)">
+                <path d="M0 0 Q4 -38 3 -78 Q1 -118 4 -155 Q6 -178 8 -198" fill="none" stroke="#6e4a0c" stroke-width="10" stroke-linecap="round"/>
+                <path d="M8 -198 Q52 -222 70 -204 Q60 -188 34 -194Z"  fill="#2e6e12"/>
+                <path d="M8 -198 Q-36 -224 -54 -207 Q-44 -191 -18 -196Z" fill="#3a8020"/>
+                <path d="M8 -198 Q54 -186 68 -164 Q54 -153 30 -164Z"  fill="#226008"/>
+                <path d="M8 -198 Q-38 -188 -54 -166 Q-40 -155 -16 -165Z" fill="#2e6e12"/>
+                <path d="M8 -198 Q38 -178 46 -156 Q32 -148 18 -160Z"  fill="#3a8020"/>
+                <path d="M8 -198 Q-22 -180 -30 -158 Q-16 -150 0 -162Z" fill="#226008"/>
+                <circle cx="10" cy="-193" r="8"  fill="#8B5E3C"/>
+                <circle cx="2"  cy="-186" r="7"  fill="#7a5030"/>
+            </g>
+            <g transform="translate(215, 438)">
+                <path d="M0 0 Q-6 -44 -4 -88 Q-2 -132 -8 -172 Q-10 -198 -12 -222" fill="none" stroke="#7a5210" stroke-width="11" stroke-linecap="round"/>
+                <path d="M-12 -222 Q32 -248 54 -230 Q44 -212 18 -218Z" fill="#2e6e12"/>
+                <path d="M-12 -222 Q-56 -250 -76 -232 Q-66 -214 -40 -220Z" fill="#3a8020"/>
+                <path d="M-12 -222 Q34 -210 50 -188 Q36 -177 12 -188Z" fill="#226008"/>
+                <path d="M-12 -222 Q-58 -212 -76 -190 Q-62 -179 -38 -190Z" fill="#2e6e12"/>
+                <path d="M-12 -222 Q22 -204 30 -180 Q16 -172 2 -184Z"  fill="#3a8020"/>
+                <circle cx="-10" cy="-217" r="8.5" fill="#8B5E3C"/>
+                <circle cx="-20" cy="-210" r="7.5" fill="#7a5030"/>
+            </g>
+            <ellipse cx="100" cy="478" rx="26" ry="11" fill="#3a7a42" opacity=".7"/>
+            <ellipse cx="262" cy="480" rx="20" ry="9"  fill="#2e6e12" opacity=".65"/>
+        </svg>
+    </div>
+
+    <!-- Fale wody -->
+    <div id="waves-wrap">
+        <svg id="wave-svg" viewBox="0 0 2880 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 55 Q180 25 360 55 Q540 85 720 55 Q900 25 1080 55 Q1260 85 1440 55 Q1620 25 1800 55 Q1980 85 2160 55 Q2340 25 2520 55 Q2700 85 2880 55 L2880 320 L0 320Z" fill="#4a9abb" opacity=".88"/>
+            <path d="M0 88 Q180 62 360 88 Q540 114 720 88 Q900 62 1080 88 Q1260 114 1440 88 Q1620 62 1800 88 Q1980 114 2160 88 Q2340 62 2520 88 Q2700 114 2880 88 L2880 320 L0 320Z" fill="#2d6e90" opacity=".72"/>
+            <path d="M0 118 Q180 98 360 118 Q540 138 720 118 Q900 98 1080 118 Q1260 138 1440 118 Q1620 98 1800 118 Q1980 138 2160 118 Q2340 98 2520 118 Q2700 138 2880 118 L2880 320 L0 320Z" fill="#1a4f6a" opacity=".6"/>
+            <path d="M0 42 Q180 34 360 42 Q540 50 720 42 Q900 34 1080 42 Q1260 50 1440 42 Q1620 34 1800 42 Q1980 50 2160 42 Q2340 34 2520 42 Q2700 50 2880 42" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2.5"/>
+        </svg>
+    </div>
+
+    <!-- Mewy -->
+    <div id="gulls">
+        <div class="gull"     style="--gy:7vh; --gd:19s; --gx:-3s;  --gs:1;    --gf:.54s"><svg width="48" height="20" viewBox="0 0 48 20"><line class="wl" x1="24" y1="8" x2="4"  y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><line class="wr" x1="24" y1="8" x2="44" y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="9" rx="3" ry="2" fill="#445"/><ellipse cx="27.5" cy="8.2" rx="1.8" ry="1.3" fill="#556"/><line x1="29" y1="8" x2="31" y2="9" stroke="#f9c74f" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+        <div class="gull"     style="--gy:4vh; --gd:13s; --gx:-6s;  --gs:.72;  --gf:.42s"><svg width="48" height="20" viewBox="0 0 48 20"><line class="wl" x1="24" y1="8" x2="4"  y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><line class="wr" x1="24" y1="8" x2="44" y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="9" rx="3" ry="2" fill="#445"/><ellipse cx="27.5" cy="8.2" rx="1.8" ry="1.3" fill="#556"/><line x1="29" y1="8" x2="31" y2="9" stroke="#f9c74f" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+        <div class="gull rtl" style="--gy:9vh; --gd:17s; --gx:-9s;  --gs:.88;  --gf:.60s"><svg width="48" height="20" viewBox="0 0 48 20"><line class="wl" x1="24" y1="8" x2="4"  y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><line class="wr" x1="24" y1="8" x2="44" y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="9" rx="3" ry="2" fill="#445"/></svg></div>
+        <div class="gull"     style="--gy:3vh; --gd:24s; --gx:-14s; --gs:.55;  --gf:.38s"><svg width="48" height="20" viewBox="0 0 48 20"><line class="wl" x1="24" y1="8" x2="4"  y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><line class="wr" x1="24" y1="8" x2="44" y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="9" rx="3" ry="2" fill="#445"/></svg></div>
+        <div class="gull rtl" style="--gy:14vh;--gd:22s; --gx:-18s; --gs:.78;  --gf:.50s"><svg width="48" height="20" viewBox="0 0 48 20"><line class="wl" x1="24" y1="8" x2="4"  y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><line class="wr" x1="24" y1="8" x2="44" y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="9" rx="3" ry="2" fill="#445"/></svg></div>
+        <div class="gull"     style="--gy:2vh; --gd:28s; --gx:-22s; --gs:.45;  --gf:.35s"><svg width="48" height="20" viewBox="0 0 48 20"><line class="wl" x1="24" y1="8" x2="4"  y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><line class="wr" x1="24" y1="8" x2="44" y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="9" rx="3" ry="2" fill="#445"/></svg></div>
+        <div class="gull rtl" style="--gy:11vh;--gd:15s; --gx:-5s;  --gs:.65;  --gf:.46s"><svg width="48" height="20" viewBox="0 0 48 20"><line class="wl" x1="24" y1="8" x2="4"  y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><line class="wr" x1="24" y1="8" x2="44" y2="2"  stroke="#445" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="24" cy="9" rx="3" ry="2" fill="#445"/></svg></div>
+    </div>
+
+</div><!-- /scene -->
+
+
+<!-- ═══ ŁÓDKA ═══════════════════════════════════════════════ -->
+<div id="boat-wrap">
+    <div id="boat">
+        <div id="hint"></div>
+
+        <!-- Normalna łódka SVG (skierowana w prawo) -->
+        <div class="boat-normal">
+            <svg viewBox="0 0 80 68" width="90" height="76" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+                <ellipse cx="40" cy="66" rx="30" ry="4" fill="rgba(0,0,0,.12)"/>
+                <!-- Maszt -->
+                <line x1="32" y1="4" x2="32" y2="44" stroke="#8b6a14" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Bom -->
+                <line x1="32" y1="44" x2="12" y2="44" stroke="#8b6a14" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Grot (mainsail) -->
+                <path d="M32 6 L10 42 L32 44Z" fill="white" stroke="#cce8f5" stroke-width=".5"/>
+                <!-- Fok (jib) — dziób w prawo -->
+                <path d="M32 17 L62 42 L32 44Z" fill="#ddf0fb" stroke="#cce8f5" stroke-width=".5"/>
+                <!-- Kadłub -->
+                <path d="M10 44 Q42 56 74 45 L68 52 Q42 61 14 52Z" fill="#1a3560"/>
+                <!-- Linia wodna PLŻ -->
+                <path d="M12 49 Q42 57 72 48" fill="none" stroke="#d62828" stroke-width="1.8"/>
+                <!-- Bandera PLŻ -->
+                <polygon points="32,4 20,8 32,13" fill="#d62828"/>
+                <!-- Iluminator -->
+                <circle cx="22" cy="48" r="3" fill="#6bbde0" stroke="rgba(255,255,255,.7)" stroke-width="1"/>
+            </svg>
+        </div>
+
+        <!-- Łódka zasypana piaskiem -->
+        <div class="boat-buried">
+            <svg viewBox="0 0 80 68" width="90" height="76" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+                <ellipse cx="40" cy="56" rx="44" ry="14" fill="#e8ca7a" opacity=".9"/>
+                <ellipse cx="40" cy="56" rx="36" ry="10" fill="#d4a855" opacity=".7"/>
+                <line x1="36" y1="48" x2="28" y2="15" stroke="#8b6a14" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M28 16 L50 38 L32 42Z" fill="white" opacity=".6"/>
+                <path d="M8 50 Q40 46 72 50 L68 57 Q40 60 12 57Z" fill="#1a3560" opacity=".85"/>
+                <path d="M10 53 Q40 57 70 53" fill="none" stroke="#d62828" stroke-width="1.5"/>
+                <circle cx="20" cy="44" r="2" fill="#e8ca7a"/>
+                <circle cx="55" cy="42" r="1.5" fill="#d4a855"/>
+                <circle cx="34" cy="40" r="2" fill="#e8ca7a"/>
+                <text x="30" y="36" font-size="8" font-family="Nunito,sans-serif" fill="#d62828" font-weight="bold">SOS</text>
+            </svg>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ═══ TREŚĆ ════════════════════════════════════════════════ -->
+<div class="page">
+
+    <div class="plz-logo">
+        <img src="/static/images/PLZ_transparent_1.webp" width="56" height="56" alt="PLŻ logo" style="object-fit:contain;">
+        <div class="plz-logo__text">PLŻ<span class="plz-logo__sub">Polska Liga Żeglarska</span></div>
+    </div>
+
+    <div class="card">
+        <div class="hero-emoji">⛵</div>
+        <h1 class="card__title">Wyżywienie na Regatach</h1>
+        <p class="card__sub">Złóż zamówienie na posiłki podczas zawodów.<br>Szybko, wygodnie — i z wiatrem w żaglach!</p>
+        <a href="/formularz" class="btn btn-cta">Złóż Zamówienie 🍽️</a>
+        <a href="/admin"     class="btn btn-secondary">Panel Admina (Kapitanat)</a>
+    </div>
+
+</div>
+
+
+<!-- ═══ JAVASCRIPT ══════════════════════════════════════════ -->
+<script>
+(function () {
+'use strict';
+
+/* ── Stałe ───────────────────────────────── */
+const SHORE_FRAC = 0.22;   // 22% = strefa wyspy (odpowiada clamp(240px,28vw,420px))
+const LERP       = 0.048;
+const BOB_AMP    = 7,   BOB_SPD  = 0.0018;
+const TILT_AMP   = 3,   TILT_SPD = 0.0024;
+const FLIP_SPD   = 0.07;
+
+/* ── DOM ─────────────────────────────────── */
+const boatEl = document.getElementById('boat');
+const hintEl = document.getElementById('hint');
+
+/* ── Stan ────────────────────────────────── */
+const s = {
+    x: window.innerWidth * 0.5,
+    prevX: window.innerWidth * 0.5,
+    facing: 1, dispFacing: 1,
+    capsized: false, capsizing: false,
+    rescuing: false,
+    onShore: null, clicks: 0,
+};
+let mouseX = window.innerWidth * 0.5;
+let t0 = null;
+
+/* ── Helpers ─────────────────────────────── */
+const mobile  = () => window.innerWidth < 768;
+const shoreL  = () => window.innerWidth * SHORE_FRAC;
+const shoreR  = () => window.innerWidth * (1 - SHORE_FRAC);
+
+/* Y poziom wody (gdzie łódka normalnie pływa) */
+const waterY  = () => window.innerHeight * 0.63 - 34;
+
+/* Y poziom plaży (gdzie łódka ląduje po wywrotce) — na piasku wyspy */
+const beachY  = () => window.innerHeight * 0.84;
+
+/* ── Mysz / touch ────────────────────────── */
+document.addEventListener('mousemove', e => { mouseX = e.clientX; });
+document.addEventListener('touchmove', e => {
+    if (e.touches.length) mouseX = e.touches[0].clientX;
+}, { passive: true });
+
+/* ── Kliknięcie ratowania ────────────────── */
+boatEl.addEventListener('click', () => {
+    if (!s.capsized || s.capsizing || s.rescuing) return;
+    s.clicks++;
+    const left = 3 - s.clicks;
+    hintEl.textContent = left > 0 ? `Jeszcze ${left}× kliknij! 🆘` : '⛵ Wracamy na wodę!';
+    if (s.clicks >= 3) {
+        hintEl.style.display = 'none';
+        setTimeout(startRescue, 350);
+    }
+});
+
+/* ── Rescue — odwrócony salt na wodę ────────
+   BUGFIX: zapisujemy shore przed czyszczeniem stanu           */
+function startRescue() {
+    const shore = s.onShore;  // ← zapisz ZANIM wyczyścimy stan!
+    s.rescuing  = true;
+    boatEl.classList.remove('capsized');
+
+    const sL   = shoreL(), sR = shoreR();
+
+    /* Pozycja startowa = plaża (tam gdzie łódka leży) */
+    const startX = s.x - 40;
+    const startY = beachY();
+
+    /* Pozycja docelowa = woda, blisko granicy wyspy */
+    const endX = shore === 'left'
+        ? sL + 100          // w prawo od lewej wyspy
+        : sR - 100 - 80;    // w lewo od prawej wyspy
+    const endY = waterY();
+
+    const startT = performance.now();
+    const DUR    = 800;
+
+    function unflip(now) {
+        const p  = Math.min((now - startT) / DUR, 1);
+        const ep = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2, 3)/2;
+
+        const cx  = startX + (endX - startX) * ep;
+        /* Y interpoluje od plaży do wody, plus łuk w górę (arc) */
+        const cy  = startY + (endY - startY) * ep - 110 * Math.sin(Math.PI * p);
+        /* Obrót odwrotny: od 360° (leżąca) do 0° (prosto) */
+        const rot = (1 - ep) * 400;
+
+        boatEl.style.transform =
+            `translate(${cx}px,${cy}px) rotate(${rot}deg) scaleX(1)`;
+
+        if (p < 1) {
+            requestAnimationFrame(unflip);
+        } else {
+            /* Wylądował na wodzie — przywróć normalne pływanie */
+            s.x          = endX + 40;
+            s.rescuing   = false;
+            s.capsized   = false;
+            s.onShore    = null;
+            s.clicks     = 0;
+            s.facing     = shore === 'left' ? 1 : -1;  // ← używamy zapisanego shore!
+            s.dispFacing = s.facing;
+            mouseX       = s.x;  // sync myszy by LERP nie skakał
+        }
+    }
+    requestAnimationFrame(unflip);
+}
+
+/* ── Capsize z saltem na plażę ───────────── */
+function startCapsize(shore) {
+    if (s.capsized || s.capsizing) return;
+    s.capsizing = true;
+    s.onShore   = shore;
+
+    const startX = s.x - 40;
+    const startY = waterY();
+    const sL     = shoreL(), sR = shoreR();
+
+    /* Miejsce lądowania na plaży wyspy */
+    const landX  = shore === 'left'
+        ? shoreL() * 0.45 - 40      // środek lewej wyspy
+        : shoreR() + (window.innerWidth - shoreR()) * 0.45;
+    const landY  = beachY();
+
+    const startT = performance.now();
+    const DUR    = 820;
+
+    function flip(now) {
+        const p  = Math.min((now - startT) / DUR, 1);
+        const ep = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2, 3)/2;
+
+        const cx  = startX + (landX - startX) * ep;
+        /* Y: od wody do plaży + łuk w górę pośrodku */
+        const cy  = startY + (landY - startY) * ep - 110 * Math.sin(Math.PI * p);
+        const rot = p * 400;
+
+        boatEl.style.transform = `translate(${cx}px,${cy}px) rotate(${rot}deg)`;
+
+        if (p < 1) {
+            requestAnimationFrame(flip);
+        } else {
+            /* Utkwił na plaży */
+            s.x         = landX + 40;
+            s.capsizing = false;
+            s.capsized  = true;
+            boatEl.classList.add('capsized');
+            hintEl.style.display = 'block';
+            hintEl.textContent   = 'Kliknij 3× by wrócić! 🆘';
+        }
+    }
+    requestAnimationFrame(flip);
+}
+
+/* ── Główna pętla animacji ───────────────── */
+function loop(ts) {
+    if (!t0) t0 = ts;
+    const t  = ts - t0;
+    const wY = waterY();
+    const sL = shoreL(), sR = shoreR();
+
+    if (s.capsizing || s.rescuing) { requestAnimationFrame(loop); return; }
+
+    let bx, by, rot, sx;
+
+    if (!s.capsized) {
+        s.prevX = s.x;
+
+        if (mobile()) {
+            s.x = window.innerWidth / 2 + Math.sin(t * 0.00038) * window.innerWidth * 0.30;
+            s.facing = Math.cos(t * 0.00038) > 0 ? 1 : -1;
+        } else {
+            s.x += (mouseX - s.x) * LERP;
+            const dx = s.x - s.prevX;
+            if (Math.abs(dx) > 0.35) s.facing = dx > 0 ? 1 : -1;
+        }
+
+        s.dispFacing += (s.facing - s.dispFacing) * FLIP_SPD;
+
+        const bob  = Math.sin(t * BOB_SPD)  * BOB_AMP;
+        const tilt = Math.sin(t * TILT_SPD) * TILT_AMP + (s.x - s.prevX) * 0.38;
+
+        if (!mobile()) {
+            if (s.x < sL) { s.x = sL - 10; startCapsize('left');  return; }
+            if (s.x > sR) { s.x = sR + 10; startCapsize('right'); return; }
+        }
+
+        bx = s.x - 40; by = wY + bob; rot = tilt; sx = s.dispFacing;
+
+    } else {
+        /* Zasypana — leży na plaży */
+        bx  = s.x - 40;
+        by  = beachY();
+        rot = s.onShore === 'left' ? 10 : -10;
+        sx  = 1;
+    }
+
+    boatEl.style.transform =
+        `translate(${bx}px,${by}px) rotate(${rot}deg) scaleX(${sx})`;
+
+    requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+})();
+</script>
+
+</body>
+</html>
