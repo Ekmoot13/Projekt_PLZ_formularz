@@ -60,28 +60,8 @@ body::before { display: none; }
     pointer-events: none; width: 0; height: 0; overflow: visible;
 }
 #boat {
-    pointer-events: all;
     transform-origin: 40px 44px;
     will-change: transform;
-    cursor: default;
-}
-#boat.capsized { cursor: pointer; }
-.boat-buried { display: none; }
-#boat.capsized .boat-normal { display: none; }
-#boat.capsized .boat-buried { display: block; }
-
-#hint {
-    position: absolute; top: -46px; left: 50%;
-    transform: translateX(-50%);
-    background: rgba(26,53,96,.92); color: #fff;
-    font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
-    padding: 5px 12px; border-radius: 10px; white-space: nowrap;
-    pointer-events: none; display: none;
-}
-#hint::after {
-    content:''; position: absolute; top:100%; left:50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent; border-top-color: rgba(26,53,96,.92);
 }
 
 /* ─── PAGE ───────────────────────────────────────────────── */
@@ -317,47 +297,17 @@ body::before { display: none; }
 <!-- ═══ ŁÓDKA ═══════════════════════════════════════════════ -->
 <div id="boat-wrap">
     <div id="boat">
-        <div id="hint"></div>
-
-        <!-- Normalna łódka SVG (skierowana w prawo) -->
-        <div class="boat-normal">
-            <svg viewBox="0 0 80 68" width="90" height="76" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
-                <ellipse cx="40" cy="66" rx="30" ry="4" fill="rgba(0,0,0,.12)"/>
-                <!-- Maszt -->
-                <line x1="32" y1="4" x2="32" y2="44" stroke="#8b6a14" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Bom -->
-                <line x1="32" y1="44" x2="12" y2="44" stroke="#8b6a14" stroke-width="1.5" stroke-linecap="round"/>
-                <!-- Grot (mainsail) -->
-                <path d="M32 6 L10 42 L32 44Z" fill="white" stroke="#cce8f5" stroke-width=".5"/>
-                <!-- Fok (jib) — dziób w prawo -->
-                <path d="M32 17 L62 42 L32 44Z" fill="#ddf0fb" stroke="#cce8f5" stroke-width=".5"/>
-                <!-- Kadłub -->
-                <path d="M10 44 Q42 56 74 45 L68 52 Q42 61 14 52Z" fill="#1a3560"/>
-                <!-- Linia wodna PLŻ -->
-                <path d="M12 49 Q42 57 72 48" fill="none" stroke="#d62828" stroke-width="1.8"/>
-                <!-- Bandera PLŻ -->
-                <polygon points="32,4 20,8 32,13" fill="#d62828"/>
-                <!-- Iluminator -->
-                <circle cx="22" cy="48" r="3" fill="#6bbde0" stroke="rgba(255,255,255,.7)" stroke-width="1"/>
-            </svg>
-        </div>
-
-        <!-- Łódka zasypana piaskiem -->
-        <div class="boat-buried">
-            <svg viewBox="0 0 80 68" width="90" height="76" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
-                <ellipse cx="40" cy="56" rx="44" ry="14" fill="#e8ca7a" opacity=".9"/>
-                <ellipse cx="40" cy="56" rx="36" ry="10" fill="#d4a855" opacity=".7"/>
-                <line x1="36" y1="48" x2="28" y2="15" stroke="#8b6a14" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M28 16 L50 38 L32 42Z" fill="white" opacity=".6"/>
-                <path d="M8 50 Q40 46 72 50 L68 57 Q40 60 12 57Z" fill="#1a3560" opacity=".85"/>
-                <path d="M10 53 Q40 57 70 53" fill="none" stroke="#d62828" stroke-width="1.5"/>
-                <circle cx="20" cy="44" r="2" fill="#e8ca7a"/>
-                <circle cx="55" cy="42" r="1.5" fill="#d4a855"/>
-                <circle cx="34" cy="40" r="2" fill="#e8ca7a"/>
-                <text x="30" y="36" font-size="8" font-family="Nunito,sans-serif" fill="#d62828" font-weight="bold">SOS</text>
-            </svg>
-        </div>
-
+        <svg viewBox="0 0 80 68" width="90" height="76" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+            <ellipse cx="40" cy="66" rx="30" ry="4" fill="rgba(0,0,0,.12)"/>
+            <line x1="32" y1="4" x2="32" y2="44" stroke="#8b6a14" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="32" y1="44" x2="12" y2="44" stroke="#8b6a14" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M32 6 L10 42 L32 44Z" fill="white" stroke="#cce8f5" stroke-width=".5"/>
+            <path d="M32 17 L62 42 L32 44Z" fill="#ddf0fb" stroke="#cce8f5" stroke-width=".5"/>
+            <path d="M10 44 Q42 56 74 45 L68 52 Q42 61 14 52Z" fill="#1a3560"/>
+            <path d="M12 49 Q42 57 72 48" fill="none" stroke="#d62828" stroke-width="1.8"/>
+            <polygon points="32,4 20,8 32,13" fill="#d62828"/>
+            <circle cx="22" cy="48" r="3" fill="#6bbde0" stroke="rgba(255,255,255,.7)" stroke-width="1"/>
+        </svg>
     </div>
 </div>
 
@@ -387,38 +337,27 @@ body::before { display: none; }
 'use strict';
 
 /* ── Stałe ───────────────────────────────── */
-const SHORE_FRAC = 0.22;   // 22% = strefa wyspy (odpowiada clamp(240px,28vw,420px))
-const LERP       = 0.048;
-const BOB_AMP    = 7,   BOB_SPD  = 0.0018;
-const TILT_AMP   = 3,   TILT_SPD = 0.0024;
-const FLIP_SPD   = 0.07;
+const LERP      = 0.048;
+const BOB_AMP   = 7,   BOB_SPD  = 0.0018;
+const TILT_AMP  = 3,   TILT_SPD = 0.0024;
+const FLIP_SPD  = 0.07;
+const MARGIN    = 80;  // odległość od krawędzi ekranu
 
 /* ── DOM ─────────────────────────────────── */
 const boatEl = document.getElementById('boat');
-const hintEl = document.getElementById('hint');
 
 /* ── Stan ────────────────────────────────── */
 const s = {
     x: window.innerWidth * 0.5,
     prevX: window.innerWidth * 0.5,
     facing: 1, dispFacing: 1,
-    capsized: false, capsizing: false,
-    rescuing: false,
-    onShore: null, clicks: 0,
 };
 let mouseX = window.innerWidth * 0.5;
 let t0 = null;
 
 /* ── Helpers ─────────────────────────────── */
-const mobile  = () => window.innerWidth < 768;
-const shoreL  = () => window.innerWidth * SHORE_FRAC;
-const shoreR  = () => window.innerWidth * (1 - SHORE_FRAC);
-
-/* Y poziom wody (gdzie łódka normalnie pływa) */
-const waterY  = () => window.innerHeight * 0.63 - 34;
-
-/* Y poziom plaży (gdzie łódka ląduje po wywrotce) — na piasku wyspy */
-const beachY  = () => window.innerHeight * 0.84;
+const mobile = () => window.innerWidth < 768;
+const waterY = () => window.innerHeight * 0.63 - 34;
 
 /* ── Mysz / touch ────────────────────────── */
 document.addEventListener('mousemove', e => { mouseX = e.clientX; });
@@ -426,158 +365,33 @@ document.addEventListener('touchmove', e => {
     if (e.touches.length) mouseX = e.touches[0].clientX;
 }, { passive: true });
 
-/* ── Kliknięcie ratowania ────────────────── */
-boatEl.addEventListener('click', () => {
-    if (!s.capsized || s.capsizing || s.rescuing) return;
-    s.clicks++;
-    const left = 3 - s.clicks;
-    hintEl.textContent = left > 0 ? `Jeszcze ${left}× kliknij! 🆘` : '⛵ Wracamy na wodę!';
-    if (s.clicks >= 3) {
-        hintEl.style.display = 'none';
-        setTimeout(startRescue, 350);
-    }
-});
-
-/* ── Rescue — odwrócony salt na środek wody ── */
-function startRescue() {
-    const shore = s.onShore;
-    s.rescuing  = true;
-    boatEl.classList.remove('capsized');
-    hintEl.style.display = 'none';
-
-    /* Start = plaża gdzie łódka leży */
-    const startX = s.x - 40;
-    const startY = beachY();
-
-    /* Cel = ŚRODEK ekranu na linii wody — daleko od obu wysp */
-    const endX = window.innerWidth / 2 - 40;
-    const endY = waterY();
-
-    const startT = performance.now();
-    const DUR    = 950;
-
-    function unflip(now) {
-        const p  = Math.min((now - startT) / DUR, 1);
-        const ep = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2, 3)/2;
-
-        const cx  = startX + (endX - startX) * ep;
-        /* Łuk w górę podczas lotu */
-        const cy  = startY + (endY - startY) * ep - 130 * Math.sin(Math.PI * p);
-        /* Obrót: od 360° (leżąca) do 0° (prosto) */
-        const rot = (1 - ep) * 360;
-        /* Kierunek: od wyspy do środka */
-        const scx = shore === 'left' ? 1 : -1;
-
-        boatEl.style.transform =
-            `translate(${cx}px,${cy}px) rotate(${rot}deg) scaleX(${scx})`;
-
-        if (p < 1) {
-            requestAnimationFrame(unflip);
-        } else {
-            /* Na wodzie — środek ekranu, sync myszy */
-            s.x          = window.innerWidth / 2;
-            s.rescuing   = false;
-            s.capsized   = false;
-            s.onShore    = null;
-            s.clicks     = 0;
-            s.facing     = shore === 'left' ? 1 : -1;
-            s.dispFacing = s.facing;
-            mouseX       = s.x;
-        }
-    }
-    requestAnimationFrame(unflip);
-}
-
-/* ── Capsize z saltem na plażę ───────────── */
-function startCapsize(shore) {
-    if (s.capsized || s.capsizing) return;
-    s.capsizing = true;
-    s.onShore   = shore;
-
-    const startX = s.x - 40;
-    const startY = waterY();
-    const sL     = shoreL(), sR = shoreR();
-
-    /* Miejsce lądowania na plaży wyspy */
-    const landX  = shore === 'left'
-        ? shoreL() * 0.45 - 40      // środek lewej wyspy
-        : shoreR() + (window.innerWidth - shoreR()) * 0.45;
-    const landY  = beachY();
-
-    const startT = performance.now();
-    const DUR    = 820;
-
-    function flip(now) {
-        const p  = Math.min((now - startT) / DUR, 1);
-        const ep = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2, 3)/2;
-
-        const cx  = startX + (landX - startX) * ep;
-        /* Y: od wody do plaży + łuk w górę pośrodku */
-        const cy  = startY + (landY - startY) * ep - 110 * Math.sin(Math.PI * p);
-        const rot = p * 400;
-
-        boatEl.style.transform = `translate(${cx}px,${cy}px) rotate(${rot}deg)`;
-
-        if (p < 1) {
-            requestAnimationFrame(flip);
-        } else {
-            /* Utkwił na plaży */
-            s.x         = landX + 40;
-            s.capsizing = false;
-            s.capsized  = true;
-            boatEl.classList.add('capsized');
-            hintEl.style.display = 'block';
-            hintEl.textContent   = 'Kliknij 3× by wrócić! 🆘';
-        }
-    }
-    requestAnimationFrame(flip);
-}
-
 /* ── Główna pętla animacji ───────────────── */
 function loop(ts) {
     if (!t0) t0 = ts;
     const t  = ts - t0;
     const wY = waterY();
-    const sL = shoreL(), sR = shoreR();
 
-    if (s.capsizing || s.rescuing) { requestAnimationFrame(loop); return; }
+    s.prevX = s.x;
 
-    let bx, by, rot, sx;
-
-    if (!s.capsized) {
-        s.prevX = s.x;
-
-        if (mobile()) {
-            s.x = window.innerWidth / 2 + Math.sin(t * 0.00038) * window.innerWidth * 0.30;
-            s.facing = Math.cos(t * 0.00038) > 0 ? 1 : -1;
-        } else {
-            s.x += (mouseX - s.x) * LERP;
-            const dx = s.x - s.prevX;
-            if (Math.abs(dx) > 0.35) s.facing = dx > 0 ? 1 : -1;
-        }
-
-        s.dispFacing += (s.facing - s.dispFacing) * FLIP_SPD;
-
-        const bob  = Math.sin(t * BOB_SPD)  * BOB_AMP;
-        const tilt = Math.sin(t * TILT_SPD) * TILT_AMP + (s.x - s.prevX) * 0.38;
-
-        if (!mobile()) {
-            if (s.x < sL) { s.x = sL - 10; startCapsize('left');  return; }
-            if (s.x > sR) { s.x = sR + 10; startCapsize('right'); return; }
-        }
-
-        bx = s.x - 40; by = wY + bob; rot = tilt; sx = s.dispFacing;
-
+    if (mobile()) {
+        /* Na mobile — łódka kołysze się automat. */
+        s.x      = window.innerWidth / 2 + Math.sin(t * 0.00038) * window.innerWidth * 0.30;
+        s.facing = Math.cos(t * 0.00038) > 0 ? 1 : -1;
     } else {
-        /* Zasypana — leży na plaży */
-        bx  = s.x - 40;
-        by  = beachY();
-        rot = s.onShore === 'left' ? 10 : -10;
-        sx  = 1;
+        /* Desktop — podążaj za myszą, z marginesem od krawędzi */
+        const target = Math.max(MARGIN, Math.min(window.innerWidth - MARGIN, mouseX));
+        s.x += (target - s.x) * LERP;
+        const dx = s.x - s.prevX;
+        if (Math.abs(dx) > 0.35) s.facing = dx > 0 ? 1 : -1;
     }
 
+    s.dispFacing += (s.facing - s.dispFacing) * FLIP_SPD;
+
+    const bob  = Math.sin(t * BOB_SPD)  * BOB_AMP;
+    const tilt = Math.sin(t * TILT_SPD) * TILT_AMP + (s.x - s.prevX) * 0.38;
+
     boatEl.style.transform =
-        `translate(${bx}px,${by}px) rotate(${rot}deg) scaleX(${sx})`;
+        `translate(${s.x - 40}px,${wY + bob}px) rotate(${tilt}deg) scaleX(${s.dispFacing})`;
 
     requestAnimationFrame(loop);
 }

@@ -91,24 +91,6 @@
         font-weight: 700; font-size: 14px; margin-top: 14px;
     }
 
-    /* ─── MAŁPY ──────────────────────────────────────── */
-    .monkey-side {
-        position: fixed; bottom: 0; z-index: 0; pointer-events: none;
-        width: clamp(90px, 12vw, 175px);
-    }
-    #monkey-l { left: 0; }
-    #monkey-r { right: 0; transform: scaleX(-1); }
-
-    #coconut {
-        position: fixed; width: 20px; height: 20px; border-radius: 50%;
-        background: radial-gradient(circle at 35% 35%, #a0652a, #5a3010);
-        box-shadow: 2px 2px 5px rgba(0,0,0,.35); z-index: 10;
-        pointer-events: none; display: none;
-    }
-    @keyframes arm-throw-anim { 0%{transform:rotate(0)} 40%{transform:rotate(-60deg)} 100%{transform:rotate(0)} }
-    @keyframes arm-catch-anim { 0%{transform:rotate(0)} 50%{transform:rotate(45deg)} 100%{transform:rotate(0)} }
-    .arm-throw { animation: arm-throw-anim .42s ease-out; }
-    .arm-catch { animation: arm-catch-anim .42s ease-in; }
     </style>
 </head>
 <body>
@@ -121,80 +103,6 @@
             <path d="M0 170 Q200 158 400 172 Q600 186 800 170 L800 220 L0 220Z" fill="#1a4f6a" opacity=".6"/>
         </svg>
     </div>
-
-    <!-- Małpa lewa -->
-    <div class="monkey-side" id="monkey-l">
-        <svg viewBox="0 0 200 440" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto">
-            <path d="M100 440 Q96 390 98 330 Q100 265 96 200 Q93 155 95 110" fill="none" stroke="#7a5210" stroke-width="15" stroke-linecap="round"/>
-            <path d="M95 110 Q152 78 178 96 Q164 114 132 108Z" fill="#2e6e12"/>
-            <path d="M95 110 Q38 76 14 93 Q28 111 60 106Z" fill="#3a8020"/>
-            <path d="M95 110 Q160 98 182 120 Q166 132 136 122Z" fill="#2e6e12"/>
-            <path d="M95 110 Q30 100 10 122 Q26 134 56 124Z" fill="#3a8020"/>
-            <path d="M95 110 Q150 124 166 148 Q150 158 128 144Z" fill="#226008"/>
-            <path d="M95 110 Q40 126 26 150 Q42 160 64 146Z" fill="#2e6e12"/>
-            <path d="M95 110 Q110 136 106 160 Q95 160 93 138Z" fill="#1a5005"/>
-            <circle cx="96" cy="114" r="11" fill="#8B5E3C"/>
-            <circle cx="83" cy="122" r="10" fill="#7a5030"/>
-            <ellipse cx="115" cy="215" rx="22" ry="26" fill="#8B6340"/>
-            <ellipse cx="115" cy="220" rx="14" ry="17" fill="#C49A6C"/>
-            <circle cx="115" cy="187" r="20" fill="#8B6340"/>
-            <ellipse cx="115" cy="194" rx="13" ry="10" fill="#C49A6C"/>
-            <circle cx="108" cy="183" r="4.5" fill="#fff"/><circle cx="122" cy="183" r="4.5" fill="#fff"/>
-            <circle cx="109" cy="184" r="2.8" fill="#222"/><circle cx="123" cy="184" r="2.8" fill="#222"/>
-            <circle cx="112" cy="190" r="1.8" fill="#6b4220"/><circle cx="118" cy="190" r="1.8" fill="#6b4220"/>
-            <circle cx="95"  cy="187" r="9" fill="#8B6340"/><circle cx="95"  cy="187" r="5.5" fill="#C49A6C"/>
-            <circle cx="135" cy="187" r="9" fill="#8B6340"/><circle cx="135" cy="187" r="5.5" fill="#C49A6C"/>
-            <path d="M93 230 Q62 258 66 288 Q70 312 86 318" fill="none" stroke="#8B6340" stroke-width="7" stroke-linecap="round"/>
-            <path d="M103 238 Q92 264 86 282" fill="none" stroke="#7a5030" stroke-width="10" stroke-linecap="round"/>
-            <path d="M128 238 Q138 264 144 282" fill="none" stroke="#7a5030" stroke-width="10" stroke-linecap="round"/>
-            <ellipse cx="82" cy="285" rx="13" ry="7.5" fill="#8B6340" transform="rotate(-20,82,285)"/>
-            <ellipse cx="148" cy="285" rx="13" ry="7.5" fill="#8B6340" transform="rotate(20,148,285)"/>
-            <g id="arm-l-g" style="transform-origin:95px 210px;">
-                <path d="M95 210 Q66 192 52 178" fill="none" stroke="#7a5030" stroke-width="10" stroke-linecap="round"/>
-                <ellipse cx="48" cy="174" rx="11" ry="7.5" fill="#8B6340" transform="rotate(-30,48,174)"/>
-            </g>
-            <path d="M135 210 Q155 200 164 207" fill="none" stroke="#7a5030" stroke-width="10" stroke-linecap="round"/>
-            <ellipse cx="168" cy="209" rx="11" ry="7.5" fill="#8B6340"/>
-        </svg>
-    </div>
-
-    <!-- Małpa prawa (lustrzana) -->
-    <div class="monkey-side" id="monkey-r">
-        <svg viewBox="0 0 200 440" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto">
-            <path d="M100 440 Q96 390 98 330 Q100 265 96 200 Q93 155 95 110" fill="none" stroke="#7a5210" stroke-width="15" stroke-linecap="round"/>
-            <path d="M95 110 Q152 78 178 96 Q164 114 132 108Z" fill="#2e6e12"/>
-            <path d="M95 110 Q38 76 14 93 Q28 111 60 106Z" fill="#3a8020"/>
-            <path d="M95 110 Q160 98 182 120 Q166 132 136 122Z" fill="#2e6e12"/>
-            <path d="M95 110 Q30 100 10 122 Q26 134 56 124Z" fill="#3a8020"/>
-            <path d="M95 110 Q150 124 166 148 Q150 158 128 144Z" fill="#226008"/>
-            <path d="M95 110 Q40 126 26 150 Q42 160 64 146Z" fill="#2e6e12"/>
-            <path d="M95 110 Q110 136 106 160 Q95 160 93 138Z" fill="#1a5005"/>
-            <circle cx="96" cy="114" r="11" fill="#8B5E3C"/>
-            <circle cx="83" cy="122" r="10" fill="#7a5030"/>
-            <ellipse cx="115" cy="215" rx="22" ry="26" fill="#8B6340"/>
-            <ellipse cx="115" cy="220" rx="14" ry="17" fill="#C49A6C"/>
-            <circle cx="115" cy="187" r="20" fill="#8B6340"/>
-            <ellipse cx="115" cy="194" rx="13" ry="10" fill="#C49A6C"/>
-            <circle cx="108" cy="183" r="4.5" fill="#fff"/><circle cx="122" cy="183" r="4.5" fill="#fff"/>
-            <circle cx="109" cy="184" r="2.8" fill="#222"/><circle cx="123" cy="184" r="2.8" fill="#222"/>
-            <circle cx="112" cy="190" r="1.8" fill="#6b4220"/><circle cx="118" cy="190" r="1.8" fill="#6b4220"/>
-            <circle cx="95"  cy="187" r="9" fill="#8B6340"/><circle cx="95"  cy="187" r="5.5" fill="#C49A6C"/>
-            <circle cx="135" cy="187" r="9" fill="#8B6340"/><circle cx="135" cy="187" r="5.5" fill="#C49A6C"/>
-            <path d="M93 230 Q62 258 66 288 Q70 312 86 318" fill="none" stroke="#8B6340" stroke-width="7" stroke-linecap="round"/>
-            <path d="M103 238 Q92 264 86 282" fill="none" stroke="#7a5030" stroke-width="10" stroke-linecap="round"/>
-            <path d="M128 238 Q138 264 144 282" fill="none" stroke="#7a5030" stroke-width="10" stroke-linecap="round"/>
-            <ellipse cx="82" cy="285" rx="13" ry="7.5" fill="#8B6340" transform="rotate(-20,82,285)"/>
-            <ellipse cx="148" cy="285" rx="13" ry="7.5" fill="#8B6340" transform="rotate(20,148,285)"/>
-            <g id="arm-r-g" style="transform-origin:95px 210px;">
-                <path d="M95 210 Q66 192 52 178" fill="none" stroke="#7a5030" stroke-width="10" stroke-linecap="round"/>
-                <ellipse cx="48" cy="174" rx="11" ry="7.5" fill="#8B6340" transform="rotate(-30,48,174)"/>
-            </g>
-            <path d="M135 210 Q155 200 164 207" fill="none" stroke="#7a5030" stroke-width="10" stroke-linecap="round"/>
-            <ellipse cx="168" cy="209" rx="11" ry="7.5" fill="#8B6340"/>
-        </svg>
-    </div>
-
-    <div id="coconut"></div>
 
     <!-- ═══ TREŚĆ ═══════════════════════════════════════ -->
     <div class="page">
@@ -547,63 +455,6 @@
         goBack();
     }
 
-    /* ═══════════════════════════════════════════════════
-       ANIMACJA MAŁP I KOKOSU
-    ═══════════════════════════════════════════════════ */
-    (function monkeyAnim() {
-        const coconutEl = document.getElementById('coconut');
-        const mL  = document.getElementById('monkey-l');
-        const mR  = document.getElementById('monkey-r');
-        const armL = document.getElementById('arm-l-g');
-        const armR = document.getElementById('arm-r-g');
-        let thrower = 0, busy = false;
-
-        function handPos(side) {
-            const el = side === 0 ? mL : mR;
-            const r  = el.getBoundingClientRect();
-            if (side === 0) {
-                return { x: r.left + (52/200)*r.width, y: r.top + (178/440)*r.height };
-            } else {
-                return { x: r.right - (52/200)*r.width, y: r.top + (178/440)*r.height };
-            }
-        }
-
-        function triggerArm(side, type) {
-            const arm = side === 0 ? armL : armR;
-            if (!arm) return;
-            arm.classList.remove('arm-throw','arm-catch');
-            void arm.offsetWidth;
-            arm.classList.add(type === 'throw' ? 'arm-throw' : 'arm-catch');
-            setTimeout(() => arm.classList.remove('arm-throw','arm-catch'), 460);
-        }
-
-        function throwCoconut() {
-            if (busy) return; busy = true;
-            const from = thrower, to = 1 - thrower;
-            const s = handPos(from), e = handPos(to);
-            triggerArm(from, 'throw');
-            coconutEl.style.display = 'block';
-            const DUR = 1200, arcH = -Math.min(window.innerHeight*.32, 240);
-            const startT = performance.now();
-            function step(now) {
-                const p  = Math.min((now-startT)/DUR, 1);
-                const ep = p < .5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
-                coconutEl.style.left = (s.x+(e.x-s.x)*ep)+'px';
-                coconutEl.style.top  = (s.y+(e.y-s.y)*ep + arcH*Math.sin(Math.PI*p))+'px';
-                coconutEl.style.transform = `rotate(${p*360}deg)`;
-                if (p<1) { requestAnimationFrame(step); }
-                else {
-                    coconutEl.style.display='none';
-                    triggerArm(to,'catch');
-                    thrower=to; busy=false;
-                }
-            }
-            requestAnimationFrame(step);
-        }
-
-        setTimeout(throwCoconut, 1500);
-        setInterval(throwCoconut, 3500);
-    })();
     </script>
 </body>
 </html>
