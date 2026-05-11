@@ -109,7 +109,6 @@
 
         <div class="plz-logo">
             <img src="/static/images/PLZ_transparent_1.webp" width="50" height="50" alt="PLŻ" style="object-fit:contain;">
-            <div class="plz-logo__text">PLŻ<span class="plz-logo__sub">Polska Liga Żeglarska</span></div>
         </div>
 
         <div class="card">
@@ -149,7 +148,8 @@
                     <span class="athlete-badge" id="athlete-count-display"></span>
                 </div>
 
-                <h1 class="card__title" style="font-size:20px;">Wybór posiłków 🍽️</h1>
+                <h1 class="card__title" style="font-size:20px;">Karta Zamówienia</h1>
+                <p id="meal-list-name-display" style="text-align:center; font-size:15px; font-weight:800; color:var(--water-dark); margin-bottom:8px;"></p>
                 <p class="card__sub">Suma dań w każdym dniu musi równać się liczbie zawodników.</p>
 
                 <div id="days-container"></div>
@@ -264,7 +264,9 @@
     function loadMealsAndGoToStep2() {
         fetch('/api/active/meals')
             .then(r => r.json())
-            .then(days => {
+            .then(data => {
+                const days = data.days || data; // backwards compat
+                const listName = data.name || '';
                 currentMeals = days;
                 buildMealForm(days);
                 document.getElementById('step1').classList.remove('active');
@@ -272,6 +274,9 @@
                 document.getElementById('club-name-display').textContent = currentClub.club_name;
                 document.getElementById('athlete-count-display').textContent =
                     `👥 ${currentClub.athlete_count} zawodników`;
+                const nameEl = document.getElementById('meal-list-name-display');
+                nameEl.textContent = listName || '';
+                nameEl.style.display = listName ? 'block' : 'none';
 
                 // Komunikat edycji vs nowego zamówienia
                 const subEl = document.querySelector('#step2 .card__sub');

@@ -215,7 +215,10 @@
 
     <div class="plz-logo">
         <img src="/static/images/PLZ_transparent_1.webp" width="50" height="50" alt="PLŻ" style="object-fit:contain;">
-        <div class="plz-logo__text">PLŻ<span class="plz-logo__sub">Polska Liga Żeglarska</span></div>
+    </div>
+
+    <div style="width:100%;max-width:720px;margin-bottom:10px;">
+        <a href="/" class="btn btn-secondary" style="margin-top:0;width:auto;display:inline-block;padding:10px 22px;">← Powrót do portu</a>
     </div>
 
     <div class="card" style="max-width:720px;">
@@ -225,9 +228,15 @@
         <!-- ══ 1. LISTY KLUBÓW ══════════════════════════ -->
         <p class="section-title">Listy klubów</p>
 
-        <button class="new-list-btn" onclick="openNewClubList()">
-            ➕ Dodaj nową listę klubów
-        </button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+            <button class="new-list-btn" style="flex:1;margin-bottom:0;" onclick="openNewClubList()">
+                ➕ Dodaj nową listę klubów
+            </button>
+            <button class="tile-btn tile-btn-activate" style="padding:12px 18px;border-radius:12px;font-size:13px;white-space:nowrap;"
+                onclick="exportPasswordsPDF()">
+                🔑 Eksportuj hasła (PDF)
+            </button>
+        </div>
 
         <div class="list-grid" id="club-lists-grid"></div>
 
@@ -281,9 +290,14 @@
                 Zaznacz wszystko
             </label>
             <span class="sel-count" id="sel-count-label">Wybrano: 0</span>
-            <button class="sel-download-btn" id="download-btn" onclick="downloadOrders()" disabled>
-                ⬇️ Pobierz CSV
-            </button>
+            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="sel-download-btn" id="download-rest-btn" onclick="downloadRestaurantPDF()" disabled>
+                    🍽️ PDF Restauracja
+                </button>
+                <button class="sel-download-btn" id="download-verif-btn" onclick="downloadVerificationPDF()" disabled>
+                    ✅ PDF Weryfikacja
+                </button>
+            </div>
         </div>
 
         <div id="orders-container">
@@ -346,10 +360,10 @@
         </div>
 
         <div class="modal-hint">
-            <strong>Format pliku / edycji:</strong><br>
-            Jedna linia = jeden dzień:<br>
-            <code>Dzień N: danie1;danie2;danie3</code><br>
-            Przykład: <code>Dzień 1: kotlet;pierogi;zupa</code>
+            <strong>Format:</strong> jedna linia = jeden dzień:<br>
+            <code>N: danie1, danie2, danie3</code><br>
+            Przykład: <code>1: kotlet, pierogi, zupa</code><br>
+            <small style="color:#c0392b;">⚠️ Używaj <strong>przecinków</strong>, nie średników. Numer dnia musi być liczbą.</small>
         </div>
 
         <div class="upload-row">
@@ -616,58 +630,152 @@ function updateSelectionUI() {
     const count        = selectedOrders.size;
     const totalVisible = Object.keys(orderMap).length;
     const countLabel   = document.getElementById('sel-count-label');
-    const downloadBtn  = document.getElementById('download-btn');
     const selAllCb     = document.getElementById('select-all-checkbox');
 
-    if (countLabel)  countLabel.textContent = `Wybrano: ${count}`;
-    if (downloadBtn) downloadBtn.disabled   = count === 0;
+    if (countLabel) countLabel.textContent = `Wybrano: ${count}`;
+    ['download-rest-btn','download-verif-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = count === 0;
+    });
     if (selAllCb) {
         selAllCb.checked       = totalVisible > 0 && count === totalVisible;
         selAllCb.indeterminate = count > 0 && count < totalVisible;
     }
 }
 
-function downloadOrders() {
+/* ═══════════════════════════════════════════════════════
+   HELPER PDF — otwiera nowe okno i drukuje
+═══════════════════════════════════════════════════════ */
+function openPrintWindow(title, bodyHtml) {
+    const win = window.open('', '_blank', 'width=860,height=700');
+    win.document.write(`<!DOCTYPE html>
+<html lang="pl"><head>
+<meta charset="UTF-8"><title>${title}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;color:#1a3560;padding:36px 40px;font-size:13px}
+h1{font-size:22px;font-weight:900;font-style:italic;margin-bottom:4px;color:#1a3560}
+.meta{font-size:11px;color:#7a95bb;margin-bottom:28px}
+h2{font-size:14px;font-weight:800;color:#2c6e8a;margin:22px 0 8px;border-bottom:2px solid #e0eef8;padding-bottom:5px}
+.dish-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f4f8}
+.dish-name{font-weight:600}
+.dish-count{font-weight:800;color:#1a3560}
+.club-block{margin-bottom:20px;padding:12px 16px;background:#f5f9fc;border-radius:8px;border-left:4px solid #2c6e8a}
+.club-name{font-size:15px;font-weight:800;color:#1a3560;margin-bottom:8px}
+.total-row{display:flex;justify-content:space-between;font-weight:800;padding:6px 0 0;margin-top:6px;border-top:2px solid #2c6e8a;color:#2c6e8a}
+@media print{body{padding:20px}@page{margin:1cm}}
+</style></head>
+<body>${bodyHtml}
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`);
+    win.document.close();
+}
+
+/* ── Walidacja: czy wszystkie kluby z aktywnej listy są zaznaczone ── */
+async function validateExportSelection() {
+    const activeList = clubLists.find(l => l.active);
+    if (!activeList || !(activeList.clubs || []).length) return true;
+
+    const activeNames   = (activeList.clubs || []).map(c => c.name);
+    const selectedNames = new Set([...selectedOrders].map(i => orderMap[i]?.club_name).filter(Boolean));
+    const missing       = activeNames.filter(n => !selectedNames.has(n));
+
+    if (missing.length === 0) return true;
+
+    return confirm(
+        `Nie zaznaczono zamówień dla wszystkich klubów z aktywnej listy.\n\n` +
+        `Brakuje (${missing.length}): ${missing.join(', ')}\n\n` +
+        `Czy mimo to chcesz kontynuować eksport?`
+    );
+}
+
+/* ── PDF dla restauracji: suma dań ── */
+async function downloadRestaurantPDF() {
     const orders = [...selectedOrders].map(i => orderMap[i]).filter(Boolean);
     if (!orders.length) return;
+    if (!await validateExportSelection()) return;
 
-    /* Nagłówki CSV */
-    const rows = [['Klub', 'Hashtag', 'Data złożenia', 'Ostatnia aktualizacja', 'Dzień', 'Danie', 'Ilość']];
-
+    /* Zsumuj dania po dniach */
+    const totals = {};   // { day: { dish: count } }
     orders.forEach(o => {
-        const days    = o.orders || {};
-        const dayKeys = Object.keys(days);
-        if (dayKeys.length === 0) {
-            rows.push([o.club_name, o.hashtag || '', o.date || '', o.updated_at || '', '', '', '']);
-        } else {
-            dayKeys.forEach(day => {
-                const dishes = days[day] || {};
-                Object.entries(dishes).forEach(([dish, count]) => {
-                    rows.push([
-                        o.club_name, o.hashtag || '',
-                        o.date || '', o.updated_at || '',
-                        day, dish, count
-                    ]);
-                });
+        Object.entries(o.orders || {}).forEach(([day, dishes]) => {
+            if (!totals[day]) totals[day] = {};
+            Object.entries(dishes).forEach(([dish, cnt]) => {
+                totals[day][dish] = (totals[day][dish] || 0) + cnt;
             });
-        }
+        });
     });
 
-    /* Escapowanie pól CSV */
-    const csvContent = rows.map(r =>
-        r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-    ).join('\r\n');
+    const date = new Date().toLocaleDateString('pl-PL');
+    let body = `<h1>Zestawienie dla restauracji</h1>
+<p class="meta">Wygenerowano: ${date} &nbsp;|&nbsp; Zamówień: ${orders.length}</p>`;
 
-    /* BOM UTF-8 dla Excela */
-    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `zamowienia_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    Object.entries(totals).forEach(([day, dishes]) => {
+        body += `<h2>Dzień ${day}</h2>`;
+        const total = Object.values(dishes).reduce((s,c)=>s+c,0);
+        Object.entries(dishes).sort((a,b)=>b[1]-a[1]).forEach(([dish, cnt]) => {
+            body += `<div class="dish-row"><span class="dish-name">${dish}</span><span class="dish-count">${cnt} porcji</span></div>`;
+        });
+        body += `<div class="total-row"><span>ŁĄCZNIE</span><span>${total} porcji</span></div>`;
+    });
+
+    openPrintWindow('Zestawienie dla restauracji', body);
+}
+
+/* ── PDF weryfikacyjny: zamówienie per klub ── */
+async function downloadVerificationPDF() {
+    const orders = [...selectedOrders].map(i => orderMap[i]).filter(Boolean);
+    if (!orders.length) return;
+    if (!await validateExportSelection()) return;
+
+    const date = new Date().toLocaleDateString('pl-PL');
+    let body = `<h1>Weryfikacja zamówień</h1>
+<p class="meta">Wygenerowano: ${date} &nbsp;|&nbsp; Klubów: ${orders.length}</p>`;
+
+    orders.forEach(o => {
+        body += `<div class="club-block"><div class="club-name">⚓ ${o.club_name}`;
+        if (o.hashtag) body += ` <span style="font-size:11px;color:#7a95bb;">${o.hashtag}</span>`;
+        body += `</div>`;
+        Object.entries(o.orders || {}).forEach(([day, dishes]) => {
+            body += `<div style="font-size:11px;font-weight:800;color:#2c6e8a;margin:8px 0 4px;text-transform:uppercase;letter-spacing:1px;">Dzień ${day}</div>`;
+            Object.entries(dishes).forEach(([dish, cnt]) => {
+                body += `<div class="dish-row"><span class="dish-name">${dish}</span><span class="dish-count">${cnt} porcji</span></div>`;
+            });
+        });
+        body += `</div>`;
+    });
+
+    openPrintWindow('Weryfikacja zamówień', body);
+}
+
+/* ── PDF z hasłami klubów ── */
+function exportPasswordsPDF() {
+    const activeList = clubLists.find(l => l.active);
+    const list = activeList || clubLists[0];
+    if (!list) { alert('Brak list klubów.'); return; }
+
+    const date = new Date().toLocaleDateString('pl-PL');
+    let body = `<h1>Lista haseł klubów</h1>
+<p class="meta">${list.name} &nbsp;|&nbsp; Wygenerowano: ${date}</p>
+<table style="width:100%;border-collapse:collapse;margin-top:8px;">
+<thead><tr>
+<th style="text-align:left;padding:8px 12px;background:#f0f4f8;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Klub</th>
+<th style="text-align:left;padding:8px 12px;background:#f0f4f8;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Hasło</th>
+<th style="text-align:center;padding:8px 12px;background:#f0f4f8;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Zawodnicy</th>
+</tr></thead><tbody>`;
+
+    (list.clubs || []).forEach((c, i) => {
+        const bg = i % 2 === 0 ? '#fff' : '#f8fbfd';
+        body += `<tr style="background:${bg};">
+<td style="padding:9px 12px;font-weight:700;">${c.name}</td>
+<td style="padding:9px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#2c6e8a;">${c.password || '—'}</td>
+<td style="padding:9px 12px;text-align:center;font-weight:600;">${c.count || 4}</td>
+</tr>`;
+    });
+    body += `</tbody></table>`;
+
+    openPrintWindow('Lista haseł klubów', body);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -774,19 +882,34 @@ function applyClubDefaults() {
 }
 
 function parseMealText(text) {
-    return text.split('\n')
-        .map(l => l.trim()).filter(l => l)
-        .map(l => {
-            const colonIdx = l.indexOf(':');
-            if (colonIdx === -1) return null;
-            const day    = l.slice(0, colonIdx).trim();
-            const dishes = l.slice(colonIdx + 1).split(';').map(d => d.trim()).filter(d => d);
-            return { day, dishes };
-        }).filter(Boolean);
+    const errors = [];
+    const result = [];
+    const lines  = text.split('\n').map(l => l.trim()).filter(l => l);
+
+    for (const l of lines) {
+        const colonIdx = l.indexOf(':');
+        if (colonIdx === -1) {
+            errors.push(`Brak dwukropka: "${l}"`); continue;
+        }
+        const dayPart    = l.slice(0, colonIdx).trim();
+        const dishesPart = l.slice(colonIdx + 1).trim();
+
+        if (!/^\d+$/.test(dayPart))
+            errors.push(`Numer dnia musi być liczbą (znaleziono: "${dayPart}")`);
+
+        if (dishesPart.includes(';'))
+            errors.push(`Użyj przecinków zamiast średników w linii: "${l}"`);
+
+        const dishes = dishesPart.split(',').map(d => d.trim()).filter(d => d);
+        if (!dishes.length) { errors.push(`Brak dań w linii: "${l}"`); continue; }
+
+        result.push({ day: dayPart, dishes });
+    }
+    return { result, errors };
 }
 
 function daysToText(days) {
-    return (days || []).map(d => `${d.day}: ${(d.dishes||[]).join(';')}`).join('\n');
+    return (days || []).map(d => `${d.day}: ${(d.dishes||[]).join(', ')}`).join('\n');
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -909,9 +1032,14 @@ function loadMealFile() {
 async function saveMealList() {
     const name = document.getElementById('edit-meal-name').value.trim();
     const text = document.getElementById('edit-meal-content').value;
-    const days = parseMealText(text);
+    const { result: days, errors } = parseMealText(text);
 
     if (!name) { alert('Podaj nazwę menu.'); return; }
+    if (errors.length) {
+        alert('Błędy w formacie menu:\n\n' + errors.join('\n') +
+              '\n\nPoprawny format:\n1: kotlet, pierogi\n2: zupa, sałatka');
+        return;
+    }
 
     const body = { name, days };
 

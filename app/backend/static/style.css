@@ -1,21 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&display=swap');
 
 /* ============================================================
    PALETA — ŻEGLARSKA NIEBIESKA
    ============================================================ */
 :root {
-    --sky:        #d4ecf7;   /* jasne niebo */
-    --sky-mid:    #b0d9ef;   /* środkowe niebo */
-    --water:      #4a9abb;   /* woda */
-    --water-dark: #2c6e8a;   /* głęboka woda */
-    --land:       #5aaa6e;   /* łąka/brzeg */
-    --land-dark:  #3d7a4e;   /* ciemny ląd */
-    --navy:       #1a3560;   /* tekst/granat */
-    --navy-light: #2c5282;   /* przycisk hover */
-    --red:        #d62828;   /* logo PLŻ */
+    --sky:        #d4ecf7;
+    --sky-mid:    #b0d9ef;
+    --water:      #4a9abb;
+    --water-dark: #2c6e8a;
+    --land:       #5aaa6e;
+    --land-dark:  #3d7a4e;
+    --navy:       #1a3560;
+    --navy-light: #2c5282;
+    --red:        #d62828;
     --white:      #ffffff;
-    --input-bg:   #b8d8ea;   /* tło pól = jak na screenie */
-    --input-bg2:  #c8e4f0;   /* hover pola */
+    --input-bg:   #b8d8ea;
+    --input-bg2:  #c8e4f0;
     --card-bg:    rgba(255,255,255,0.82);
     --shadow:     rgba(26,53,96,0.14);
     --text:       #1a3560;
@@ -30,12 +30,12 @@
 
 html, body {
     min-height: 100vh;
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     color: var(--text);
 }
 
 /* ============================================================
-   TAŁO — GRADIENT NIEBO + ILUSTRACJA
+   TŁO — GRADIENT NIEBO
    ============================================================ */
 body {
     background: linear-gradient(175deg, #d4ecf7 0%, #b8ddf0 40%, #90c8e6 100%);
@@ -44,7 +44,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Chmurki jako pseudo-elementy na tle */
 body::before {
     content: '';
     position: fixed;
@@ -60,14 +59,11 @@ body::before {
 }
 
 /* ============================================================
-   ILUSTRACJA MORSKA — DOLNA CZĘŚĆ BODY
-   Rysowana SVG wbudowana przez ::after
+   SCENA MORSKA
    ============================================================ */
 .sea-scene {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 0; left: 0; right: 0;
     height: 220px;
     pointer-events: none;
     z-index: 0;
@@ -97,31 +93,12 @@ body::before {
     margin-bottom: 20px;
 }
 
-.plz-logo svg {
-    width: 50px;
-    height: 50px;
-    filter: drop-shadow(0 2px 6px rgba(214,40,40,0.35));
-}
-
-.plz-logo__text {
-    font-family: 'Pacifico', cursive;
-    font-size: 20px;
-    color: var(--red);
-    line-height: 1.15;
-}
-
-.plz-logo__sub {
-    font-family: 'Nunito', sans-serif;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: var(--navy);
-    display: block;
+.plz-logo img {
+    filter: drop-shadow(0 2px 6px rgba(214,40,40,0.25));
 }
 
 /* ============================================================
-   KARTA (card)
+   KARTA
    ============================================================ */
 .card {
     width: 100%;
@@ -141,12 +118,13 @@ body::before {
    NAGŁÓWKI
    ============================================================ */
 .card__title {
-    font-family: 'Pacifico', cursive;
+    font-family: 'Montserrat', sans-serif;
     font-size: 24px;
+    font-weight: 900;
+    font-style: italic;
     color: var(--navy);
     text-align: center;
     margin-bottom: 4px;
-    font-weight: 400;
 }
 
 .card__sub {
@@ -154,6 +132,7 @@ body::before {
     color: var(--text-sub);
     text-align: center;
     margin-bottom: 28px;
+    font-weight: 600;
 }
 
 .section-title {
@@ -168,7 +147,7 @@ body::before {
 }
 
 /* ============================================================
-   FORMULARZ — POLA (wzorowane na screenie)
+   FORMULARZ — POLA
    ============================================================ */
 .field {
     margin-bottom: 18px;
@@ -193,7 +172,7 @@ body::before {
     border: none;
     border-radius: 14px;
     padding: 14px 18px;
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 15px;
     font-weight: 600;
     color: var(--navy);
@@ -233,9 +212,7 @@ body::before {
     transition: background 0.2s;
 }
 
-.product-row:hover {
-    background: var(--input-bg2);
-}
+.product-row:hover { background: var(--input-bg2); }
 
 .product-row__name {
     font-size: 14px;
@@ -251,8 +228,8 @@ body::before {
 }
 
 .counter__btn {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: none;
     background: var(--water-dark);
@@ -266,8 +243,6 @@ body::before {
     justify-content: center;
     transition: background 0.15s, transform 0.1s;
     padding: 0;
-    width: 32px;
-    height: 32px;
 }
 
 .counter__btn:hover {
@@ -280,7 +255,7 @@ body::before {
     text-align: center;
     background: transparent;
     border: none;
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 16px;
     font-weight: 800;
     color: var(--navy);
@@ -300,7 +275,7 @@ body::before {
     padding: 15px 24px;
     border: none;
     border-radius: 50px;
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 15px;
     font-weight: 800;
     cursor: pointer;
@@ -335,7 +310,6 @@ body::before {
     color: var(--navy);
 }
 
-/* BIG CTA na stronie głównej */
 .btn-cta {
     background: var(--red);
     color: #fff;
@@ -389,10 +363,7 @@ body::before {
     gap: 8px;
 }
 
-.options-list li::before {
-    content: '⚓';
-    font-size: 12px;
-}
+.options-list li::before { content: '⚓'; font-size: 12px; }
 
 .add-row {
     display: flex;
@@ -400,10 +371,7 @@ body::before {
     align-items: flex-start;
 }
 
-.add-row .field {
-    flex: 1;
-    margin-bottom: 0;
-}
+.add-row .field { flex: 1; margin-bottom: 0; }
 
 .add-row .btn {
     width: auto;
@@ -423,23 +391,15 @@ body::before {
 }
 
 .submission-card h3 {
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 15px;
     font-weight: 800;
     color: var(--navy);
     margin-bottom: 6px;
 }
 
-.submission-card p {
-    font-size: 13px;
-    color: var(--text-sub);
-    margin-bottom: 4px;
-}
-
-.submission-card em {
-    font-size: 11px;
-    color: #7a95bb;
-}
+.submission-card p { font-size: 13px; color: var(--text-sub); margin-bottom: 4px; }
+.submission-card em { font-size: 11px; color: #7a95bb; }
 
 hr.divider {
     border: none;
@@ -449,14 +409,19 @@ hr.divider {
 }
 
 /* ============================================================
-   STRONA GŁÓWNA — hero tekst
+   STRONA GŁÓWNA — hero logo w karcie
    ============================================================ */
-.hero-emoji {
-    font-size: 52px;
-    text-align: center;
-    margin-bottom: 8px;
-    line-height: 1;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+.hero-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.hero-logo img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(214,40,40,0.25));
 }
 
 /* ============================================================

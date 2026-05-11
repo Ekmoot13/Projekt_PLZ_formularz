@@ -317,11 +317,12 @@ body::before { display: none; }
 
     <div class="plz-logo">
         <img src="/static/images/PLZ_transparent_1.webp" width="56" height="56" alt="PLŻ logo" style="object-fit:contain;">
-        <div class="plz-logo__text">PLŻ<span class="plz-logo__sub">Polska Liga Żeglarska</span></div>
     </div>
 
     <div class="card">
-        <div class="hero-emoji">⛵</div>
+        <div class="hero-logo">
+            <img src="/static/images/PLZ_transparent_1.webp" width="72" height="72" alt="PLŻ" style="object-fit:contain;">
+        </div>
         <h1 class="card__title">Wyżywienie na Regatach</h1>
         <p class="card__sub">Złóż zamówienie na posiłki podczas zawodów.<br>Szybko, wygodnie — i z wiatrem w żaglach!</p>
         <a href="/formularz" class="btn btn-cta">Złóż Zamówienie 🍽️</a>
@@ -374,9 +375,9 @@ function loop(ts) {
     s.prevX = s.x;
 
     if (mobile()) {
-        /* Na mobile — łódka kołysze się automat. */
-        s.x      = window.innerWidth / 2 + Math.sin(t * 0.00038) * window.innerWidth * 0.30;
-        s.facing = Math.cos(t * 0.00038) > 0 ? 1 : -1;
+        /* Na mobile — łódka płynie prawo-lewo */
+        s.x      = window.innerWidth / 2 + Math.sin(t * 0.0014) * window.innerWidth * 0.32;
+        s.facing = Math.cos(t * 0.0014) > 0 ? 1 : -1;
     } else {
         /* Desktop — podążaj za myszą, z marginesem od krawędzi */
         const target = Math.max(MARGIN, Math.min(window.innerWidth - MARGIN, mouseX));

@@ -306,12 +306,12 @@ def get_active_clubs():
 def get_active_meals():
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute('SELECT days FROM meal_lists WHERE active = TRUE LIMIT 1')
+    cur.execute('SELECT name, days FROM meal_lists WHERE active = TRUE LIMIT 1')
     r = cur.fetchone()
     cur.close(); conn.close()
     if not r:
-        return jsonify([])
-    return jsonify(r['days'] or [])
+        return jsonify({"name": "", "days": []})
+    return jsonify({"name": r['name'] or "", "days": r['days'] or []})
 
 # ── Hashtag ───────────────────────────────────────────────
 
