@@ -478,5 +478,14 @@ def get_submissions():
     cur.close(); conn.close()
     return jsonify({"orders": result, "clubs": clubs, "hashtags": hashtags})
 
+@app.route('/api/submissions/<int:order_id>', methods=['DELETE'])
+@requires_auth
+def delete_submission(order_id):
+    conn = get_db()
+    cur  = conn.cursor()
+    cur.execute('DELETE FROM orders WHERE id = %s', (order_id,))
+    conn.commit(); cur.close(); conn.close()
+    return jsonify({"status": "deleted"})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

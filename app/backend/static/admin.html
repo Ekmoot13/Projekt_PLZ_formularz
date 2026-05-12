@@ -595,7 +595,13 @@ function renderOrders(orders) {
                         </div>
                     </div>
                 </div>
-                ${o.hashtag ? `<span class="order-hashtag">${o.hashtag}</span>` : ''}
+                <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+                    ${o.hashtag ? `<span class="order-hashtag">${o.hashtag}</span>` : ''}
+                    <button class="tile-btn tile-btn-delete"
+                        style="padding:5px 12px; font-size:11px; flex-shrink:0;"
+                        onclick="event.stopPropagation(); deleteOrder(${i})"
+                        title="Usuń zamówienie">🗑️ Usuń</button>
+                </div>
             </div>
             <div class="order-days">${daysHtml || '—'}</div>
         </div>`;
@@ -831,6 +837,24 @@ function openOrderModal(index) {
 function closeOrderModal(e) {
     if (!e || e.target === document.getElementById('modal-order'))
         document.getElementById('modal-order').style.display = 'none';
+}
+
+async function deleteOrder(index) {
+    const o = orderMap[index];
+    if (!o) return;
+    if (!confirm(`Czy na pewno chcesz usunąć zamówienie klubu:\n\n"${o.club_name}"?\n\nTej operacji nie można cofnąć.`)) return;
+
+    const res = await fetch(`/api/submissions/${o.id}`, {
+        method: 'DELETE', credentials: 'include'
+    });
+    if (res.ok) {
+        /* Usuń z zaznaczenia jeśli było zaznaczone */
+        selectedOrders.delete(index);
+        /* Przeładuj listę */
+        await loadOrders();
+    } else {
+        alert('Błąd podczas usuwania zamówienia.');
+    }
 }
 
 function filterOrders() {
